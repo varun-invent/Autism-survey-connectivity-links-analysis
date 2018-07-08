@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<atlas version="1.0">
+  <header>
+    <name>Schaefer2018Atlas</name>
+    <shortname>SA</shortname>
+    <type>Probabilistic</type>
+    <images>
+      <imagefile>Schaefer_4d_Atlas_7_Networks_1mm</imagefile>
+      <summaryimagefile>Schaefer2018_100Parcels_7Networks_order</summaryimagefile>
+    </images>
+    <images>
+      <imagefile>Schaefer_4d_Atlas_7_Networks_1mm</imagefile>
+      <summaryimagefile>Schaefer2018_100Parcels_7Networks_order</summaryimagefile>
+    </images>
+  </header>
+  <data>
+<label index="0" x="0" y="0" z="0">Visual</label>
+<label index="1" x="0" y="0" z="0">Somatomotor </label>
+<label index="2" x="0" y="0" z="0">Dorsal Attention</label>
+<label index="3" x="0" y="0" z="0">Ventral Attention</label>
+<label index="4" x="0" y="0" z="0">Limbic</label>
+<label index="5" x="0" y="0" z="0">Control</label>
+<label index="6" x="0" y="0" z="0">DMN</label>
+  </data>
+</atlas>
