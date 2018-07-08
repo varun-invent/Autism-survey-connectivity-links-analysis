@@ -413,7 +413,7 @@ if __name__ == "__main__":
     # atlasPath2 = ['juelichAtlas/Juelich-prob-1mm.nii.gz']
 
     atlasLabelsPath2 = ['juelichAtlas/Juelich.xml']
-    q2 = queryAtlas(atlasPath2,atlasLabelsPath2,false)
+    q2 = queryAtlas(atlasPath2,atlasLabelsPath2,False)
 
     # In[73]:
     q2.getAtlasRegions([33, -6, -6])
