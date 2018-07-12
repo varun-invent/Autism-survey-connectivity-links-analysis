@@ -71,6 +71,26 @@ class queryBrainnetomeROI:
         z = math.floor((mni[2] + 72)/2.0)
         return [x,y,z]
 
+
+    def XYZ2MNI1mm(self, xyz):
+        """
+        Converts the given X,Y,Z cartesian coordinates to MNI coordinates corresponding to the 1mm atlas
+        """
+        mni_x = - xyz[0] + 90
+        mni_y = xyz[1] - 126
+        mni_z = xyz[2] -72
+        return [mni_x, mni_y, mni_z]
+
+
+    def XYZ2MNI2mm(self, xyz):
+        """
+        Converts the given X,Y,Z cartesian coordinates to MNI coordinates corresponding to the 2mm atlas
+        """
+        mni_x = - 2*xyz[0] + 90
+        mni_y = 2*xyz[1] - 126
+        mni_z = 2*xyz[2] -72
+        return [mni_x, mni_y, mni_z]
+
     def brainnetomeQuery(self):
         """
         Extract the region names from excel file and creates a dictionary i.e. key value pair
