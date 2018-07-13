@@ -3,7 +3,7 @@
 
 # In[65]:
 
-
+# %%
 import pandas as pd
 import nibabel as nib
 import numpy as np
@@ -14,7 +14,7 @@ from utils import atlasUtility as au
 from utils import brainnetomeUtility as bu
 
 
-
+# %%
 class addAtlasNamestoCSV:
     def __init__(self,BNAtlasObj,HOAtlasObj,JuliechAtlasObj):
         self.BNAtlasObj = BNAtlasObj
@@ -404,11 +404,11 @@ class addAtlasNamestoCSV:
         """
 
         df = pd.read_csv(in_file)#.iloc[:,1:]
-    #     links_columns =  [41,45,51,55]
+        # links_columns =  [41,45,51,55]
         links_node_swapped_columns = links_columns[math.floor(len(links_columns)/2):] + links_columns[0:math.floor(len(links_columns)/2)]
 
 
-    #     links_columns_all_details =  list(np.arange(41,61))
+        # links_columns_all_details =  list(np.arange(41,61))
         links_node_swapped_columns_all_details = links_columns_all_details[math.floor(len(links_columns_all_details)/2):] + links_columns_all_details[0:math.floor(len(links_columns_all_details)/2)]
 
 
@@ -417,9 +417,9 @@ class addAtlasNamestoCSV:
 
 
                 if (row1[links_columns].as_matrix() == row2[links_node_swapped_columns].as_matrix()).all():
-    #                 print('swapping',ix1,ix1 + 1 +ix2)
-        #             import ipdb; ipdb.set_trace()
-        #             print('Row2',row2)
+                    #                 print('swapping',ix1,ix1 + 1 +ix2)
+                    #             import ipdb; ipdb.set_trace()
+                    #             print('Row2',row2)
                     temp = []
                     for i in range(len(links_columns_all_details)):
 
@@ -429,9 +429,9 @@ class addAtlasNamestoCSV:
                         else:
                             df.iat[ix1 + 1 + ix2, links_columns_all_details[i]] = temp[i - math.floor(len(links_columns_all_details)/2)]
 
-    #                 print('swapped',ix1,ix1 + 1 +ix2)
-        #             print('Row1', row1,'Row2', row2)
-        #             import ipdb; ipdb.set_trace()
+                        # print('swapped',ix1,ix1 + 1 +ix2)
+                    # print('Row1', row1,'Row2', row2)
+                    # import ipdb; ipdb.set_trace()
 
 
 
@@ -439,84 +439,51 @@ class addAtlasNamestoCSV:
 
         return df
 
-    #TODO
+    #TODO Test this function
     @staticmethod
-    def find_consistent_conflicting_links_score(df_ordered, columns_match_index, connectivity_column_index, s_no_column_index,\
-                                          paper_id_column_index,ignore_hemispheres= False):
-        conflicts = []
-        consistent = []
+    def add_synthetic_links(in_file,links_columns_all_details,out_file):
+        """
+        This function swaps the nodes of the links, creates new link and append the new links
+        Input: in_file :CSV file containing links
+               links_columns_all_details: The columns representing all the details associated with the node(seed,target) such as
+               MNI coordinates, names according to other atlases etc.
+               Name of the CSV file to be saved
+        Output: Dataframe of the final csv with synthetic links
+        """
 
-        df = df_ordered
-        df_conflicts_details = pd.DataFrame()
-        df_consistent_details = pd.DataFrame()
+        df = pd.read_csv(in_file)
 
-        if ignore_hemispheres: # need to test it. Looks wrong. Might break node creation
-            _columns_match_index = np.array(columns_match_index)[[1,3]]
-            print('Hemispheres ignored while checking consistency')
-        else:
-            _columns_match_index = columns_match_index
+
+        links_node_swapped_columns_all_details = links_columns_all_details[math.floor(len(links_columns_all_details)/2):] + links_columns_all_details[0:math.floor(len(links_columns_all_details)/2)]
+
+        df_new = df.copy()
 
         for ix1, (Index, row1) in  tqdm(enumerate(df.iterrows())):
-            for ix2, row2 in df[ix1+1:].iterrows():
-#                 print(row1[1], row2[1]) # printing S_no pairs
-                # if all the columns match/ Same links
-                node1 = {tuple(row1[_columns_match_index[0:math.floor(len(_columns_match_index)/2)]]), tuple(row1[_columns_match_index[math.floor(len(_columns_match_index)/2):]])}
-                node2 = {tuple(row2[_columns_match_index[0:math.floor(len(_columns_match_index)/2)]]), tuple(row2[_columns_match_index[math.floor(len(_columns_match_index)/2):]])}
-#                 print('Node 1 and 2', node1, node2)
-                # Created the above nodes to make sure that the link AB and BA are treated equally
-                if node1 == node2:
-                    if (row1[connectivity_column_index] !=  row2[connectivity_column_index]).sum() == len(connectivity_column_index):
-                        # Conflict
-                        conflicts.append([(row1[s_no_column_index].item(), row2[s_no_column_index].item()),\
-                                          (row1[paper_id_column_index].item(), row2[paper_id_column_index].item())])
+            temp = []
+            for i in range(len(links_columns_all_details)):
+
+                if i < math.floor(len(links_columns_all_details)/2):
+                    temp.append(df.iat[ix1, links_columns_all_details[i]])
+                    df_new.iat[ix1, links_columns_all_details[i]] = df.iat[ix1, links_node_swapped_columns_all_details[i]]
+                else:
+                    df_new.iat[ix1, links_columns_all_details[i]] = temp[i - math.floor(len(links_columns_all_details)/2)]
+
+                print('swapped details of ',ix1)
+
+            # import ipdb; ipdb.set_trace()
+
+        df_new = df_new.assign(synthetic = np.ones(df_new.shape[0]))
+        df = df.assign(synthetic = np.zeros(df.shape[0]))
+
+        df = df.append(df_new)
 
 
-                        _df = pd.DataFrame({'S_No_link1': [row1[s_no_column_index].item()],
-                                            'PaperID_link1':[row1[paper_id_column_index].item()],
-                                            'SeedHemisphere_link1':[row1[columns_match_index[0]]],
-                                             'SeedNameHO_link1':[row1[columns_match_index[1]]],
-                                             'ConnectivityHemisphere_link1':[row1[columns_match_index[2]]],
-                                             'ConnectivityNameHO_link1':[row1[columns_match_index[3]]],
-                                             'Under(-1)/Over(1)Connectivity_link1':[row1[connectivity_column_index].item()],
+        df.to_csv(out_file, index=False)
 
-                                            'S_No_link2': [row2[s_no_column_index].item()],
-                                            'PaperID_link2':[row2[paper_id_column_index].item()],
-                                            'SeedHemisphere_link2':[row2[columns_match_index[0]]],
-                                             'SeedNameHO_link2':[row2[columns_match_index[1]]],
-                                             'ConnectivityHemisphere_link2':[row2[columns_match_index[2]]],
-                                             'ConnectivityNameHO_link2':[row2[columns_match_index[3]]],
-                                             'Under(-1)/Over(1)Connectivity_link2':[row2[connectivity_column_index].item()]
-
-                        })
-
-                        df_conflicts_details = df_conflicts_details.append(_df)
-                    else:
-                        # Consistent
-                        consistent.append([(row1[s_no_column_index].item(), row2[s_no_column_index].item()),\
-                                          (row1[paper_id_column_index].item(), row2[paper_id_column_index].item())])
+        return df
 
 
-                        _df = pd.DataFrame({'S_No_link1': [row1[s_no_column_index].item()],
-                                            'PaperID_link1':[row1[paper_id_column_index].item()],
-                                            'SeedHemisphere_link1':[row1[columns_match_index[0]]],
-                                             'SeedNameHO_link1':[row1[columns_match_index[1]]],
-                                             'ConnectivityHemisphere_link1':[row1[columns_match_index[2]]],
-                                             'ConnectivityNameHO_link1':[row1[columns_match_index[3]]],
-                                             'Under(-1)/Over(1)Connectivity_link1':[row1[connectivity_column_index].item()],
 
-                                            'S_No_link2': [row2[s_no_column_index].item()],
-                                            'PaperID_link2':[row2[paper_id_column_index].item()],
-                                            'SeedHemisphere_link2':[row2[columns_match_index[0]]],
-                                             'SeedNameHO_link2':[row2[columns_match_index[1]]],
-                                             'ConnectivityHemisphere_link2':[row2[columns_match_index[2]]],
-                                             'ConnectivityNameHO_link2':[row2[columns_match_index[3]]],
-                                             'Under(-1)/Over(1)Connectivity_link2':[row2[connectivity_column_index].item()]
-
-                        })
-
-                        df_consistent_details = df_consistent_details.append(_df)
-
-        return df_conflicts_details, df_consistent_details
 
 def show_columns(df):
     """
@@ -541,6 +508,10 @@ if __name__ == "__main__":
 
     REMOVE_DUPLICATES =  False
     CONSISTENT_INCONSISTENT_LINKS = False
+    SYNTHETIC_LINKS = True
+    ORDER_LINK_NODES = False
+
+
     # atlas_path = 'brainnetomeAtlas/BNA-maxprob-thr0-1mm.nii.gz'
     atlas_path = 'brainnetomeAtlas/BNA-prob-2mm.nii.gz'
     atlasRegionsDescrpPath = 'brainnetomeAtlas/BNA_subregions_machineReadable.xlsx'
@@ -584,6 +555,7 @@ if __name__ == "__main__":
     csvPath = 'csv_input/als.csv'
     # q = addAtlasNamestoCSV(BNAtlasObj, HOAtlasObj, JuliechAtlasObj)
 
+
     q = addAtlasNamestoCSV(BNAtlasObj, HOAtlasObj, SchaeferAtlasObj)
 
 
@@ -609,6 +581,7 @@ if __name__ == "__main__":
     # column_index = [45,55]
     column_index = [44,54]
     df_final, df_dropped = addAtlasNamestoCSV.remove_blank_links(column_index,in_file,out_file,dropped_file)
+    in_file = 'csv_output/finalLinks_blanks_dropped_all_columns.csv'
 
     # Remove Duplicates
 
@@ -618,7 +591,6 @@ if __name__ == "__main__":
     # import pdb;pdb.set_trace()
 
     if REMOVE_DUPLICATES:
-        in_file = 'csv_output/finalLinks_blanks_dropped_all_columns.csv'
         out_file = 'csv_output/finalLinks_duplicates_removed_all_columns.csv'
         # column_index = [4,13,17,23,27,33]
 
@@ -627,22 +599,35 @@ if __name__ == "__main__":
 
         df_extracted = addAtlasNamestoCSV.remove_duplicate_rows(column_index,in_file,out_file)
         in_file = 'csv_output/finalLinks_duplicates_removed_all_columns.csv' # For next Step
-    else:
-        in_file = 'csv_output/finalLinks_blanks_dropped_all_columns.csv'
 
 
+    import pdb;pdb.set_trace()
 
+
+    # ------------------------------------
+    # Include synthetic link
+    if SYNTHETIC_LINKS:
+        links_columns_all_details =  list(np.arange(40,60))
+        out_file = 'csv_output/finalLinks_blanks_dropped_synthetic_added_all_columns.csv'
+        df = addAtlasNamestoCSV.add_synthetic_links(in_file,links_columns_all_details,out_file)
+        in_file = 'csv_output/finalLinks_blanks_dropped_synthetic_added_all_columns.csv' # For next Step
+
+
+    # -----------------------------------
 
     # Order the link nodes
+    if ORDER_LINK_NODES:
+        # Code to make all the same links have same end points so that they can be beneficial in the creating pivot table
+        # in_file = 'csv_output/finalLinks_duplicates_removed_all_columns.csv'
+        out_file = 'csv_output/finalLinks_duplicates_removed_ordered_all_columns_incl_networks.csv'
+        # links_columns =  [41,45,51,55]
+        links_columns =  [40,44,50,54]
 
-    # Code to make all the same links have same end points so that they can be beneficial in the creating pivot table
-    # in_file = 'csv_output/finalLinks_duplicates_removed_all_columns.csv'
-    out_file = 'csv_output/finalLinks_duplicates_removed_ordered_all_columns_incl_networks.csv'
-    # links_columns =  [41,45,51,55]
-    links_columns =  [40,44,50,54]
+        links_columns_all_details =  list(np.arange(40,60))
 
-    links_columns_all_details =  list(np.arange(40,60))
-    df_ordered = addAtlasNamestoCSV.order_links_end_points(in_file,links_columns,links_columns_all_details,out_file)
+        df_ordered = addAtlasNamestoCSV.order_links_end_points(in_file,links_columns,links_columns_all_details,out_file)
+
+
 
     # import pdb;pdb.set_trace()
 
@@ -676,5 +661,3 @@ if __name__ == "__main__":
         # TODO exchange df_extracted by file name
         df_conflicts_details, df_consistent_details = addAtlasNamestoCSV.find_consistent_conflicting_links(df_extracted, columns_match_index, connectivity_column_index,\
         s_no_column_index, paper_id_column_index, ignore_hemispheres = False)
-
-    # import pdb;pdb.set_trace()
