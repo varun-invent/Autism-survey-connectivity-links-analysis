@@ -25,7 +25,7 @@ def _checkPixDim(_atlas):
 
     return pixdim
 
-def getGOG(atlas,roi,hemisphere=None):
+def getCOG(atlas,roi,hemisphere=None):
     """
     Gives the centre of gravity (MNI coordinates) of an ROI
     Input: Atlas File 1mm
@@ -35,15 +35,24 @@ def getGOG(atlas,roi,hemisphere=None):
     Usage:
     >>> atlas= '/home/varun/Projects/fmri/Autism-survey-connectivity-links-analysis/hoAtlas/HarvardOxford-sub-maxprob-thr0-1mm.nii.gz'
     >>> roi = 20
-    >>> print(getGOG(atlas,roi))
+    >>> print(getCOG(atlas,roi))
     [21.48304821150856, -3.779160186625191, -17.954898911353034]
     """
 
     brain_img = nib.load(atlas)
     brain_data = brain_img.get_data()
 
-    roi_mask = np.zeros(brain_data.shape)
-    roi_mask[np.where(brain_data == roi)] = 1
+    if len(brain_data.shape) == 3: # 3D brain file
+        roi_mask = np.zeros(brain_data.shape)
+        roi_mask[np.where(brain_data == roi)] = 1
+    else: # 4D Brain File
+        roi_mask = np.zeros(tuple(brain_data.shape[:3]))
+        roi_mask = brain_data[:,:,:,roi]
+
+
+
+    # roi_mask = np.zeros(brain_data.shape)
+    # roi_mask[np.where(brain_data == roi)] = 1
 
     size_x = roi_mask.shape[0]
 
@@ -56,9 +65,55 @@ def getGOG(atlas,roi,hemisphere=None):
 
 
 
+    if len(brain_data.shape) == 3: # 3D brain file
+        CM = ndimage.measurements.center_of_mass(roi_mask)
+        MNI = _XYZ2MNI(brain_img,CM)
+    else: # 4D Brain File
+        highest_prob_idx = np.where(roi_mask == np.max(roi_mask))
+        MNI = []
+        peak_list = []
+        CM = ndimage.measurements.center_of_mass(roi_mask)
+        dist = float(np.inf)
+        # The loop finds the peak coordinate closest to the COG
+        for i in range(len(highest_prob_idx[0])):
+            peak = [highest_prob_idx[0][i],highest_prob_idx[1][i],highest_prob_idx[2][i]]
+            # Find the peak closest to the COG
+            current_dist = abs(CM[0]-peak[0]) + abs(CM[1]-peak[1]) + abs(CM[1]-peak[1])
+            if current_dist < dist:
+                if len(peak_list) != 0:
+                    peak_list = []
+                peak_list.append(peak)
+                dist = current_dist
+            elif current_dist == dist:
+                peak_list.append(peak)
+                dist = current_dist
+            else:
+                pass
 
-    CM = ndimage.measurements.center_of_mass(roi_mask)
+        # The above 'For loop' might result in miltiple peak coordinates (peak list) having same distance from COG
+        # Check which of the peak list has least x coordinate i.e closest to midline (My heuristic) to select one peak
+        x = float(np.inf)
+        res = []
+        for coordinates in peak_list:
+             current_x = abs(coordinates[0])
+             if current_x < x:
+                 res = []
+                 res.append(coordinates)
+             elif current_x == x:
+                 res.append(coordinates)
+             else:
+                 pass
 
+
+        # Find the
+        MNI = []
+        for res_peak in res:
+            MNI.append(_XYZ2MNI(brain_img,res_peak))
+
+    return MNI
+
+
+def _XYZ2MNI(brain_img,CM):
     if _checkPixDim(brain_img) == 1:
         MNI = queryAtlas.XYZ2MNI1mm(list(CM))
     elif _checkPixDim(brain_img) == 2:
@@ -84,24 +139,4 @@ if __name__ == "__main__":
     if "hemisphere" in args:
         hemisphere = args["hemisphere"]
 
-    print(getGOG(atlas,roi,hemisphere))
-
-
-
-
-
-
-
-# mask = os.path.expandvars('$FSLDIR/data/standard/MNI152_T1_2mm_brain_mask.nii.gz')
-
-# proc = subprocess.Popen(['fslmaths', mask, '-mul', '-1', '-add' ,'1', 'mask_inverted'],
-#                          stdout=subprocess.PIPE)
-# stdoutdata= proc.communicate()
-#
-# # To check how the command was executed in cmdline
-#
-# print("The commandline is: {}".format(subprocess.list2cmdline(proc.args)))
-#
-# cwd = os.getcwd()
-#
-# mask_inverted_path = opj(cwd, 'mask_inverted.nii.gz')
+    print(getCOG(atlas,roi,hemisphere))
