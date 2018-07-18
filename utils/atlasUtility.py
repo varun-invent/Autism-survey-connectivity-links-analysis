@@ -65,8 +65,8 @@ class queryAtlas:
             print('checked Pixel dimension')
 
 
-
-    def MNI2XYZ1mm(self, mni):
+    @staticmethod
+    def MNI2XYZ1mm(mni):
         """
         Converts the given MNI coordinates to X,Y,Z cartesian coordinates corresponding to the 1mm atlas
         """
@@ -75,7 +75,8 @@ class queryAtlas:
         z = mni[2] + 72
         return [x,y,z]
 
-    def MNI2XYZ2mm(self, mni):
+    @staticmethod
+    def MNI2XYZ2mm(mni):
         """
         Converts the given MNI coordinates to X,Y,Z cartesian coordinates corresponding to the 2mm atlas
         """
@@ -84,7 +85,8 @@ class queryAtlas:
         z = math.floor((mni[2] + 72)/2.0)
         return [x,y,z]
 
-    def XYZ2MNI1mm(self, xyz):
+    @staticmethod
+    def XYZ2MNI1mm(xyz):
         """
         Converts the given X,Y,Z cartesian coordinates to MNI coordinates corresponding to the 1mm atlas
         """
@@ -94,7 +96,8 @@ class queryAtlas:
         return [mni_x, mni_y, mni_z]
 
 
-    def XYZ2MNI2mm(self, xyz):
+    @staticmethod
+    def XYZ2MNI2mm(xyz):
         """
         Converts the given X,Y,Z cartesian coordinates to MNI coordinates corresponding to the 2mm atlas
         """
