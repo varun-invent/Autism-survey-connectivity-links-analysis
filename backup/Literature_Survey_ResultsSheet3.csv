@@ -1,0 +1,188 @@
+SeedName,SeedMNI,UnderConnectivityName,UnderConnectivityMNI,OverConnectivityName,OverConnectivityMNI
+PCC,-5 -35 41,Left medial prefrontal,-20 38 18,,
+PCC,-5 -35 41,Left medial prefrontal,-46 56 8,,
+PCC,-5 -35 41,Left medial prefrontal,-16 22 40,,
+PCC,-5 -35 41,Right medial prefrontal,10 34 18,,
+PCC,-5 -35 41,Left temporal lobe,-50 12 -14,,
+PCC,-5 -35 41,Right temporal lobe,50 -58 8,,
+PCC,-5 -35 41,Right temporal lobe,38 16 -22,,
+PCC,-5 -35 41,Right temporal lobe,62 8 -6,,
+PCC,-5 -35 41,Right temporal lobe,34 2 -14,,
+PCC,-5 -35 41,Left superior frontal gyrus,-24 42 18,,
+PCC,-5 -35 41,Left superior frontal gyrus,-16 18 56,,
+PCC,-5 -35 41,Right superior frontal gyrus,12 22 50,,
+PCC,-5 -35 41,Right superior frontal gyrus,30 46 32,,
+PCC,-5 -35 41,Right superior frontal gyrus,8 10 70,,
+PCC,-5 -35 41,Right superior frontal gyrus,14 48 36,,
+rTPJ,51 -52 21,Left TPJ,-42 -66 21,,
+rTPJ,51 -52 21,Left middle frontal gyrus,-21 21 39,,
+rTPJ,51 -52 21,Left precuneus,-3 -63 27,,
+rTPJ,51 -52 21,Right superior frontal gyrus,6 66 0,,
+rTPJ,51 -52 21,Right TPJ,39 -60 27,,
+rTPJ,51 -52 21,Right middle frontal gyrus,27 33 45,,
+right pSTS, 47 -60 4,Left Fusiform Gyrus,-24 -38 -18,,
+right pSTS, 47 -60 4,Left Inferior Occipital Gyrus,-42 -74 -12,,
+right pSTS, 47 -60 4,Left Inferior Temporal Gyrus,-36 -40 -16,,
+right pSTS, 47 -60 4,Right Cuneus,12 -84 40,,
+right pSTS, 47 -60 4,Left Fusiform Gyrus,-22 -46 -14,,
+right pSTS, 47 -60 4,Left Lingual Gyrus,-28 -50 -4,,
+right pSTS, 47 -60 4,Left Superior Parietal Lobule,-20 -76 44,,
+right pSTS, 47 -60 4,Right Postcentral Gyrus,50 -12 28,,
+right pSTS, 47 -60 4,Right Insula Lobe,46 -6 6,,
+right pSTS, 47 -60 4,Right Rolandic Operculum/ Inferior Parietal Cortex,48 -14 22,,
+right pSTS, 47 -60 4,Right Superior Temporal Gyrus,60 0 2,,
+right pSTS, 47 -60 4,Right Postcentral Gyrus/ BA 6,52 -18 48,,
+right pSTS, 47 -60 4,Right Amygdala,24 -4 -14,,
+right pSTS, 47 -60 4,Left Superior Temporal Gyrus,-48 2 -10,,
+right pSTS, 47 -60 4,Left Middle Temporal Gyrus,-54 -12 -8,,
+right pSTS, 47 -60 4,Left Amygdala,-22 -8 -12,,
+right pSTS, 47 -60 4,Left Rolandic Operculum/ Inferior Parietal Cortex,-50 -16 14,,
+right pSTS, 47 -60 4,Left Postcentral Gyrus/ BA 6 - BA 44,-54 -4 20,,
+right pSTS, 47 -60 4,Left Insula Lobe,-36 -4 8,,
+right pSTS, 47 -60 4,Right Fusiform Gyrus,30 -44 -10,,
+right pSTS, 47 -60 4,Right Inferior Temporal Gyrus,44 -50 -16,,
+right pSTS, 47 -60 4,Right Inferior Occipital Gyrus,44 -64 -16,,
+right pSTS, 47 -60 4,Right Lingual Gyrus,16 -42 -8,,
+right pSTS, 47 -60 4,Right ParaHippocampal Gyrus,34 -26 -18,,
+right pSTS, 47 -60 4,IPL         L,-49   -27   40,Lingual gyrus         R,14 -90 -11
+right pSTS, 47 -60 4,IPL         R,32  -36  49,Lingual gyrus         L,-16 -84 -8
+right pSTS, 47 -60 4,Precentral gyrus (BA 6)         L,-37  -12  55,L,-22 -81 -14
+right pSTS, 47 -60 4,Supramarginal gyrus         R,59 -21  37,Calcarine gyrus         L,-1 -84 -8
+right pSTS, 47 -60 4,IFG (pars triangularis) (BA 45)         L,-40  30   28,L,2 -90 10
+right pSTS, 47 -60 4,,,Fusiform gyrus         R,29 -75 -2
+pRTPJ,54 -55 26,Right lingual gyrus,15 -60 -9,,
+pRTPJ,54 -55 26,Right middle occipital gyrus,36 -75 3,,
+pRTPJ,54 -55 26,Right fusiform gyrus,30 -60 -12,,
+"Inferior Ventral Striatum (VSi)
+","9 9 -8
+",,,R Vsi - Right superior temporal gyrus,62 -30 6
+"Inferior Ventral Striatum (VSi)
+","9 9 -8
+",,,Right insula,38 -6 2
+"Inferior Ventral Striatum (VSi)
+","9 9 -8
+",,,L Vsi - Left precentral gyrus,-2 -30 58
+"Inferior Ventral Striatum 
+(VSi)
+","-9 9 -8
+",,,R Vsi - Right superior temporal gyrus,62 -30 6
+"Inferior Ventral Striatum 
+(VSi)
+","-9 9 -8
+",,,Right insula,38 -6 2
+"Inferior Ventral Striatum 
+(VSi)
+","-9 9 -8
+",,,L Vsi - Left precentral gyrus,-2 -30 58
+"Superior Ventral Striatum 
+(VSs) 
+",10 15 0,,,"L VSs - Left frontal operculum/insula,",-40 16  8
+"Superior Ventral Striatum 
+(VSs) 
+",11 15 0,,,Left middle frontal gyrus,-28 26 42
+"Superior Ventral Striatum 
+(VSs) 
+",-10 15 0,,,"L VSs - Left frontal operculum/insula,",-40 16  8
+"Superior Ventral Striatum 
+(VSs) 
+",-10 15 1,,,Left middle frontal gyrus,-28 26 42
+"
+Dorsal Caudate (DC)
+","13 15 9
+",,,R DC -Left fusiform cortex,-28 -42 -20
+"
+Dorsal Caudate (DC)
+","13 15 9
+",,,L DC - Left supramarginal gyrus,-62 -28 28
+"
+Dorsal Caudate (DC)
+","13 15 9
+",,,Right supramarginal gyrus,58 -28 50
+"Dorsal Caudal  Putamen 
+(dcP)","
+28 1 3
+",,,R dcP Right brainstem (pons),8 -26 -32
+"Dorsal Caudal  Putamen 
+(dcP)","
+28 1 3
+",,,L dcP Right lingual gyrus/cerebellum,14 -40 -12
+"Dorsal Caudal  Putamen 
+(dcP)","
+28 1 3
+",,,Left cuneus/supracalcarine cortex,-6 -88 12
+"Dorsal Rostral  Putamen 
+(drP)
+",25 8 6,,,R drP Right brainstem (pons),8 -22 -22
+"Dorsal Rostral  Putamen 
+(drP)
+",25 8 7,,,L drP Left precentral gyrus,-48 -14 56
+"Dorsal Rostral  Putamen 
+(drP)
+",25 8 8,,,L drP Left precentral gyrus,-64 0 24
+"Ventral Rostral Putamen 
+(vrP)
+",20 12 -3,R vrP	Left lateral occipital cortex/precuneus,-18  -64  40,R vrP	Right superior/middle temporal gyrus,58 -32 6
+"
+Dorsal Caudate (DC)
+","-13 15 9
+",,,R DC -Left fusiform cortex,-28 -42 -20
+"
+Dorsal Caudate (DC)
+","-13 15 9
+",,,L DC - Left supramarginal gyrus,-62 -28 28
+"
+Dorsal Caudate (DC)
+","-13 15 9
+",,,Right supramarginal gyrus,58 -28 50
+"Dorsal Caudal  Putamen 
+(dcP)","
+-28 1 3
+",,,R dcP Right brainstem (pons),8 -26 -32
+"Dorsal Caudal  Putamen 
+(dcP)","
+-28 1 3
+",,,L dcP Right lingual gyrus/cerebellum,14 -40 -12
+"Dorsal Caudal  Putamen 
+(dcP)","
+-28 1 3
+",,,Left cuneus/supracalcarine cortex,-6 -88 12
+"Dorsal Rostral  Putamen 
+(drP)
+",-25 8 6,,,R drP Right brainstem (pons),8 -22 -22
+"Dorsal Rostral  Putamen 
+(drP)
+",-25 8 7,,,L drP Left precentral gyrus,-48 -14 56
+"Dorsal Rostral  Putamen 
+(drP)
+",-25 8 8,,,L drP Left precentral gyrus,-64 0 24
+"Ventral Rostral Putamen 
+(vrP)
+",-20 12 -3,R vrP	Left lateral occipital cortex/precuneus,-18  -64  40,R vrP	Right superior/middle temporal gyrus,58 -32 6
+aMPFC (8 mm radius),-6 52 -2,Paracentral Lobule,4 -30 72,,
+aMPFC (8 mm radius),-6 52 -2,Paracentral Lobule,-10 -36 74,,
+aMPFC (8 mm radius),-6 52 -2,Middle Frontal gyrus,-24 25 48,,
+PCC (8 mm radius),-8 -56 26,Medial Prefrontal cortex,-6 54 -12,,
+R VSi,9 9 -8,Left anterior cingulate cortex (Center of mass),3 -26 20,,
+R dcP,28 1 3,Left middle frontal gyrus,17 -65 6,,
+L dcP,-28 1 3,Left superior medial gyrus,10 -66 3,,
+R drP,25 8 6,"Right parahippocampal gyrus
+",-26 11 -30,Right superior occipital gyrus,-22 62 46
+L drP,-25 8 6 ,Left superior medial gyrus,1 -64 5,Right superior parietal lobule,-18 60 49
+L drP,-25 8 6 ,Left superior frontal gyrus,11 -38 47,Left inferior parietal lobule,34 50 51
+L drP,-25 8 6 ,Left inferior frontal gyrus,41 -49 -12,,
+R vrP,20  12 -3,Right inferior frontal gyrus,-51 -37 -8,,
+L vrP,-20 12 -3,,,Right superior parietal lobule,-16 66 50
+Broca (IFG) left, -52 14 -2,Left inferior frontal gyrus,-52 16 16,,
+Broca (IFG) left, -52 14 -2,Left superior frontal gyrus,-2 14 54,,
+Broca (IFG) left, -52 14 -2,Anterior cingulate gyrus,0 26 28,,
+Broca (IFG) left, -52 14 -2,Left precentral gyrus,-50 4 38,,
+Broca (IFG) left, -52 14 -2,Left middle temporal gyrus,-60 -46 0,,
+Broca (IFG) left, -52 14 -2,"Left inferior parietal lobule, supramarginal gyrus",-54 -46 44,,
+Broca (IFG) left, -52 14 -2,Right middle frontal gyrus,42 38 30,,
+Broca (IFG) left, -52 14 -2,Right inferior frontal gyrus,50 14 -6,,
+Broca (IFG) left, -52 14 -2,Right inferior frontal gyrus,54 14 30,,
+Broca (IFG) left, -52 14 -2,Right middle temporal gyrus,52 -40 0,,
+Broca (IFG) left, -52 14 -2,"Right parietal lobule, supramarginal gyrus",56 -32 50,,
+Broca (IFG) left, -52 14 -2,Frontal operculum,34 26 0,,
+Broca (IFG) left, -52 14 -2,Right cerebellum crus I,30 -66 -32,,
+Broca (IFG) left, -52 14 -2,Left cerebellum crus I,-34 -62 -32,,
