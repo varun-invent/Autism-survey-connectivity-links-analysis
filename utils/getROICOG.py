@@ -20,11 +20,11 @@ import math
 # filename = '/home/varun/Projects/fmri/Autism-survey-connectivity-links-analysis/hoAtlas/HarvardOxford-sub-maxprob-thr0-1mm.nii.gz'
 # roi = 20
 
+
 class getROICOG:
-    def __init__(self,atlas):
+    def __init__(self, atlas):
         self.brain_img = nib.load(atlas)
         self.brain_data = self.brain_img.get_data()
-
 
     def _pixDim(self):
         """
@@ -36,11 +36,12 @@ class getROICOG:
         elif self.brain_img.header['pixdim'][1] == 1:
             pixdim = 1
         else:
-            raise Exception('Unknown Pixel Dimension', self.brain_img.header['pixdim'][1])
+            raise Exception('Unknown Pixel Dimension',
+                            self.brain_img.header['pixdim'][1])
 
         return pixdim
 
-    def _XYZ2MNI(self,CM):
+    def _XYZ2MNI(self, CM):
         if self._pixDim() == 1:
             MNI = queryAtlas.XYZ2MNI1mm(list(CM))
         elif self._pixDim() == 2:
@@ -48,8 +49,7 @@ class getROICOG:
         # print("Center of Gravity:", MNI)
         return MNI
 
-
-    def getCOG(self,roi,hemisphere=None):
+    def getCOG(self, roi, hemisphere=None):
         """
         Gives the centre of gravity (MNI coordinates) of an ROI
         Input: Atlas File 1mm
@@ -66,31 +66,27 @@ class getROICOG:
         # brain_img = nib.load(atlas)
         # brain_data = brain_img.get_data()
 
-        if len(self.brain_data.shape) == 3: # 3D brain file
+        if len(self.brain_data.shape) == 3:  # 3D brain file
             roi_mask = np.zeros(self.brain_data.shape)
             roi_mask[np.where(self.brain_data == roi)] = 1
-        else: # 4D Brain File
+        else:  # 4D Brain File
             roi_mask = np.zeros(tuple(self.brain_data.shape[:3]))
-            roi_mask = self.brain_data[:,:,:,roi]
-
-
+            roi_mask = self.brain_data[:, :, :, roi]
 
         # import pdb;pdb.set_trace()
         size_x = roi_mask.shape[0]
 
         if hemisphere == 'L':
             # Set the voxes of the ROI on the right hemisphere to zero
-            roi_mask[:math.floor(size_x/2),:,:] = 0
+            roi_mask[:math.floor(size_x / 2), :, :] = 0
         elif hemisphere == 'R':
             # Set the voxes of the ROI on the left hemisphere to zero
-            roi_mask[math.floor(size_x/2):,:,:] = 0
+            roi_mask[math.floor(size_x / 2):, :, :] = 0
 
-
-
-        if len(self.brain_data.shape) == 3: # 3D brain file
+        if len(self.brain_data.shape) == 3:  # 3D brain file
             CM = ndimage.measurements.center_of_mass(roi_mask)
             MNI = self._XYZ2MNI(CM)
-        else: # 4D Brain File
+        else:  # 4D Brain File
             highest_prob_idx = np.where(roi_mask == np.max(roi_mask))
             MNI = []
             peak_list = []
@@ -98,9 +94,11 @@ class getROICOG:
             dist = float(np.inf)
             # The loop finds the peak coordinate closest to the COG
             for i in range(len(highest_prob_idx[0])):
-                peak = [highest_prob_idx[0][i],highest_prob_idx[1][i],highest_prob_idx[2][i]]
+                peak = [highest_prob_idx[0][i], highest_prob_idx[1]
+                        [i], highest_prob_idx[2][i]]
                 # Find the peak closest to the COG
-                current_dist = abs(CM[0]-peak[0]) + abs(CM[1]-peak[1]) + abs(CM[1]-peak[1])
+                current_dist = abs(CM[0] - peak[0]) + \
+                    abs(CM[1] - peak[1]) + abs(CM[1] - peak[1])
                 if current_dist < dist:
                     if len(peak_list) != 0:
                         peak_list = []
@@ -110,23 +108,21 @@ class getROICOG:
                     peak_list.append(peak)
                     dist = current_dist
 
-
             # The above 'For loop' might result in miltiple peak coordinates (peak list) having same distance from COG
             # Check which of the peak list has least x coordinate i.e closest to midline (My heuristic) to select one peak
             x = float(np.inf)
             res = []
             for coordinates in peak_list:
-                 current_x = abs(coordinates[0])
-                 if current_x < x:
-                     res = []
-                     res.append(coordinates)
-                 elif current_x == x:
-                     res.append(coordinates)
-                 else:
-                     pass
+                current_x = abs(coordinates[0])
+                if current_x < x:
+                    res = []
+                    res.append(coordinates)
+                elif current_x == x:
+                    res.append(coordinates)
+                else:
+                    pass
 
-
-            # Find the
+            # Find the MNI coordinates of the peak coordinates
             MNI = []
             for res_peak in res:
                 MNI.append(self._XYZ2MNI(res_peak))
@@ -134,18 +130,16 @@ class getROICOG:
         return MNI
 
 
-
 if __name__ == "__main__":
     # construct the argument parser and parse the arguments
     ap = argparse.ArgumentParser()
     ap.add_argument("-a", "--atlas", required=True,
-    	help="Path to 1mm Atlas file")
+                    help="Path to 1mm Atlas file")
     ap.add_argument("-r", "--roi", required=True,
-    	help="ROI number")
+                    help="ROI number")
     ap.add_argument("-hem", "--hemisphere", required=False,
-    	help="Hemisphere")
+                    help="Hemisphere")
     args = vars(ap.parse_args())
-
 
     atlas = args["atlas"]
     roi = int(args["roi"])
@@ -154,4 +148,4 @@ if __name__ == "__main__":
         hemisphere = args["hemisphere"]
 
     obj = getROICOG(atlas)
-    print(obj.getCOG(roi,hemisphere))
+    print(obj.getCOG(roi, hemisphere))
