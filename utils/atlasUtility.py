@@ -253,6 +253,7 @@ class queryAtlas:
                                         out.append([roiNumber, roiName ,final_coord ,final_itr, max_prob, index])
 
 
+
                                 else:
                                     # Second highest probability region does not exist
                                     continue
@@ -269,11 +270,17 @@ class queryAtlas:
                                 continue
                             else:
                                 out.append([roiNumber, roiName ,final_coord ,final_itr, max_prob, index])
+                                roiNumber = None # To move to next atlas
 
                     # ------------------------------------------------------------------------------------------------------
                     else:
                         # WM_HEMISPHERE_INFO is True i.e. this info is required
-                        out.append([roiNumber, roiName ,final_coord ,final_itr, max_prob, index])
+                        if self.prob:
+                            out.append([roiNumber, roiName ,final_coord ,final_itr, max_prob, index])
+                        else:
+                            out.append([roiNumber, roiName ,final_coord ,final_itr, max_prob, index])
+                            roiNumber = None # To move to next atlas
+
 
 
                 else:
@@ -288,34 +295,32 @@ class queryAtlas:
         Loop over those regions to find the max probability region
 
         """
-        if self.prob == True: # To find the minimum distance among all the arrays
-            final_output_idx = 0
-            final_min_dist = float('Inf')
-            for idx,output in enumerate(out):
+        # To find the minimum distance among all the arrays
+        final_output_idx = 0
+        final_min_dist = float('Inf')
+        for idx,output in enumerate(out):
 
-                dist = abs(output[3][0]) + abs(output[3][1]) + abs(output[3][2])
-                if final_min_dist > dist:
-                    final_min_dist = dist
+            dist = abs(output[3][0]) + abs(output[3][1]) + abs(output[3][2])
+            if final_min_dist > dist:
+                final_min_dist = dist
 
-            final_max_prob = 0
-            for idx,output in enumerate(out): # To find the max probability if there are multiple min arrays dist
-                dist = abs(output[3][0]) + abs(output[3][1]) + abs(output[3][2])
-                if dist == final_min_dist:
-                    if final_max_prob < output[4]:
-                        final_max_prob = output[4]
-                        final_output_idx = idx
-
-
-
-            if len(out) == 0:
-                roiNumber, roiName, atlasIndex = 0, None, None
-            else:
-                roiNumber, roiName, atlasIndex = out[final_output_idx][0], out[final_output_idx][1], out[final_output_idx][5]
+        final_max_prob = 0
+        for idx,output in enumerate(out): # To find the max probability if there are multiple min arrays dist
+            dist = abs(output[3][0]) + abs(output[3][1]) + abs(output[3][2])
+            if dist == final_min_dist:
+                if final_max_prob < output[4]:
+                    final_max_prob = output[4]
+                    final_output_idx = idx
 
 
-        if self.prob == False:
-            if roiNumber == None:
-                roiNumber, roiName, atlasIndex = 0, None, None
+
+        if len(out) == 0:
+            roiNumber, roiName, atlasIndex = 0, None, None
+        else:
+            roiNumber, roiName, atlasIndex = out[final_output_idx][0], out[final_output_idx][1], out[final_output_idx][5]
+
+
+
 
         return int(roiNumber), roiName, atlasIndex
 
@@ -419,7 +424,6 @@ class queryAtlas:
                         vec_of_prob = np.array(
                         [self.atlas_list[atlas_index][x-xi,y-yi,z-zi]])
                         # It's an array of a single value i.e the ROI number
-
                         largest = 1
                         """Forced assignment as we are dealing with a
                         static atlas and not region probability maps """
@@ -444,14 +448,15 @@ class queryAtlas:
                                     max_prob_list.append(1)
 
                             vec_of_prob[roiNumber - 1] = 0 # to find second highest region
-                        else:
-                            final_roi_list, final_coord_list, final_itr_list, final_max_prob_list = None, None, None, None
 
                     if len(roi_list) != 0:
                         final_roi_list = roi_list
                         final_coord_list = self._XYZ_2_MNI(coord_list, atlas_index)
                         final_itr_list = self._voxel_2_mm(itr_list, atlas_index)
                         final_max_prob_list = max_prob_list
+
+        if len(final_roi_list) == 0:
+            final_roi_list, final_coord_list, final_itr_list, final_max_prob_list = None, None, None, None
 
         return final_roi_list, final_coord_list, final_itr_list, final_max_prob_list
 
@@ -507,12 +512,13 @@ if __name__ == "__main__":
         atlas_paths = [
         base_path + 'hoAtlas/HarvardOxford-sub-prob-1mm.nii.gz',
         base_path + 'hoAtlas/HarvardOxford-cort-prob-1mm.nii.gz',
-        base_path + 'cerebellumAtlas/Cerebellum-MNIflirt-prob-1mm.nii.gz']
+        base_path + 'cerebellumAtlas/Cerebellum-MNIflirt-prob-1mm.nii.gz'
+        ]
     else:
         atlas_paths = [
-        base_path + 'hoAtlas/HarvardOxford-sub-maxprob-thr0-1mm.nii.gz',
-        base_path + 'hoAtlas/HarvardOxford-cort-maxprob-thr0-1mm.nii.gz',
-        base_path + 'cerebellumAtlas/Cerebellum-MNIflirt-maxprob-thr0-1mm.nii.gz'
+        base_path + 'hoAtlas/HarvardOxford-sub-maxprob-thr25-1mm.nii.gz',
+        base_path + 'hoAtlas/HarvardOxford-cort-maxprob-thr25-1mm.nii.gz',
+        base_path + 'cerebellumAtlas/Cerebellum-MNIflirt-maxprob-thr25-1mm.nii.gz'
         ]
 
     atlas_labels_paths = [
