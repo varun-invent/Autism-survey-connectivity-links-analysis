@@ -201,7 +201,7 @@ class queryAtlas:
                     # if True:#max_prob == 0: # # Coordinate is outside the atlas
                     _roiNumber, _final_coord, _final_itr, _max_prob = self.get_neighbouring_coordinates(x,y,z,self.itr,index, largest= 3)
 
-                    if len(_roiNumber) == 0:
+                    if _roiNumber == None:
                         continue
 
                     # Getting the Highest probability region from 2 largest returned
@@ -222,6 +222,7 @@ class queryAtlas:
                     roiName  = roiName.strip()
 
                     # ----------------- When White Matter and Hemispheric information is not needed --------------------
+                    # TODO Take as input from user about which ROI to ignore
                     if not self.WM_HEMISPHERE_INFO:
 
                         if self.prob == True:
@@ -247,9 +248,16 @@ class queryAtlas:
                                             max_prob=_max_prob[2]
                                             roiName = self.roiName(self.atlasLabelsPaths[index], roiNumber)
                                             roiName  = roiName.strip()
-                                            out.append([roiNumber, roiName ,final_coord ,final_itr, max_prob, index])
+                                            if roiName == 'Right Cerebral White Matter'\
+                                            or roiName == 'Left Cerebral White Matter'\
+                                            or roiName == 'Left Cerebral Cortex'\
+                                            or roiName == 'Right Cerebral Cortex':
+                                                roiNumber = None # Nothing is assigned
+                                            else:
+                                                # When the third Highest probability region is relevant
+                                                out.append([roiNumber, roiName ,final_coord ,final_itr, max_prob, index])
                                     else:
-                                        # When the second Highest probability region in not irrelevant
+                                        # When the second Highest probability region is relevant
                                         out.append([roiNumber, roiName ,final_coord ,final_itr, max_prob, index])
 
 
@@ -266,7 +274,6 @@ class queryAtlas:
                             if roiName == 'Right Cerebral White Matter' or roiName == 'Left Cerebral White Matter'\
                             or roiName == 'Left Cerebral Cortex' or roiName == 'Right Cerebral Cortex':
                                 roiNumber = None
-                                # atlasIndex = atlasIndex + 1 TODO is it important?
                                 continue
                             else:
                                 out.append([roiNumber, roiName ,final_coord ,final_itr, max_prob, index])
@@ -286,7 +293,6 @@ class queryAtlas:
                 else:
                     # roiNumber is zero so set it to None and move to next atlas
                     roiNumber = None
-                    # atlasIndex = atlasIndex + 1 TODO is it important?
 
 
         """
@@ -464,22 +470,6 @@ class queryAtlas:
 
 # In[70]:
 if __name__ == "__main__":
-
-    # atlasPaths1  = ['hoAtlas/HarvardOxford-cort-maxprob-thr25-2mm.nii.gz',\
-    #                'hoAtlas/HarvardOxford-sub-maxprob-thr25-2mm.nii.gz',
-    #                'cerebellumAtlas/Cerebellum-MNIflirt-maxprob-thr25-1mm.nii.gz']
-    # atlasLabelsPaths1 = ['hoAtlas/HarvardOxford-Cortical.xml','hoAtlas/HarvardOxford-Subcortical.xml',\
-    #                     'cerebellumAtlas/Cerebellum_MNIflirt.xml']
-
-    # atlasPaths1  = ['hoAtlas/HarvardOxford-sub-maxprob-thr0-1mm.nii.gz','hoAtlas/HarvardOxford-cort-maxprob-thr0-1mm.nii.gz',
-    # 'cerebellumAtlas/Cerebellum-MNIflirt-maxprob-thr0-1mm.nii.gz']
-    #
-    # # atlasPaths1  = ['hoAtlas/HarvardOxford-sub-prob-1mm.nii.gz',\
-    # # 'hoAtlas/HarvardOxford-cort-prob-1mm.nii.gz',
-    # # 'cerebellumAtlas/Cerebellum-MNIflirt-prob-1mm.nii.gz']
-    #
-    # atlasLabelsPaths1 = ['hoAtlas/HarvardOxford-Subcortical.xml','hoAtlas/HarvardOxford-Cortical.xml', \
-    # 'cerebellumAtlas/Cerebellum_MNIflirt.xml']
 
 
     # Parser to parse commandline arguments
