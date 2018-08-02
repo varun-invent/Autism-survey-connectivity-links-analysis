@@ -1,8 +1,6 @@
 
 # coding: utf-8
 
-# In[65]:
-
 
 import pandas as pd
 import nibabel as nib
@@ -10,9 +8,9 @@ import numpy as np
 import math
 import xml.etree.ElementTree as ET
 from tqdm import tqdm
+import argparse
 
 
-# In[66]:
 
 
 class queryBrainnetomeROI:
@@ -34,22 +32,33 @@ class queryBrainnetomeROI:
     present in the atlas.
     Set prob = True  and provide a 4D nii.gz file path as atlas_path
     """
-    def __init__(self, atlas_path, atlasRegionsDescrpPath , prob = False ):
+    def __init__(self, atlas_path, atlasRegionsDescrpPath):
         self.atlas_path = atlas_path
 
-        self.prob = prob
 
 
         _atlas = nib.load(self.atlas_path)
         self.atlas = _atlas.get_data()
 
+        """
+        Following Code to set the prob variable to True if user has
+        entered probability maps and False if fixed labeled atlas is entered
+        """
+        atlas_shape_len = len(self.atlas.shape)
+        if atlas_shape_len == 4:
+            self.prob = True
+        elif atlas_shape_len == 3:
+            self.prob = False
+        else:
+            raise Exception('Exception: Atlas of unknown shape. Exiting!')
+
+
+
         print('Atlas read')
         if _atlas.header['pixdim'][1] == 2:
             self.pixdim = 2
-#             x,y,z = self.MNI2XYZ2mm(coordMni)
         elif _atlas.header['pixdim'][1] == 1:
             self.pixdim = 1
-#             x,y,z = self.MNI2XYZ1mm(coordMni)
         else:
             raise Exception('Unknown Pixel Dimension', _atlas.header['pixdim'][1] )
 
@@ -98,7 +107,6 @@ class queryBrainnetomeROI:
         of the query ROI Number.
 
         """
-#         atlas = nib.load(self.atlas_path).get_data()
         df = pd.read_excel(self.atlasRegionsDescrpPath)
 
         if self.prob:
@@ -157,18 +165,18 @@ class queryBrainnetomeROI:
         It calls self.queryDict() in the background
         Returns the list of [Lobe, Gyrus, Region and MNI Coordinates] of the query MNI Coordinate.
         """
-#         _atlas = nib.load(self.atlas_path)
-#         atlas = _atlas.get_data()
-#         if _atlas.header['pixdim'][1] == 2:
+
         if self.pixdim == 2:
             x,y,z = self.MNI2XYZ2mm(coordMni)
-#         elif _atlas.header['pixdim'][1] == 1:
         elif self.pixdim == 1:
             x,y,z = self.MNI2XYZ1mm(coordMni)
-#         else:
-#             raise Exception('Unknown Pixel Dimension', _atlas.header['pixdim'][1] )
+
         if self.prob == False:
             roiNumber = self.atlas[x,y,z]
+            if roiNumber == 0: # Coordinate is outside the atlas
+                itr = [0,1,-1,2,-2,3,-3]
+                roiNumber, final_coord, final_itr = self.get_neighbouring_coordinates(x,y,z,itr)
+
         else:
             vec_of_prob = self.atlas[x,y,z,:]
             roiNumber = np.argmax(vec_of_prob) + 1 # [1 ... num_roi's]
@@ -190,20 +198,47 @@ class queryBrainnetomeROI:
         for xi in itr:
             for yi in itr:
                 for zi in itr:
-                    vec_of_prob = self.atlas[x-xi,y-yi,z-zi,:]
+                    if self.prob:
+                        vec_of_prob = self.atlas[x-xi,y-yi,z-zi,:]
+                        # It's an array of multiple probability values
+                    else:
+                        vec_of_prob = np.array([self.atlas[x-xi,y-yi,z-zi]])
+                        # It's an array of a single value i.e the ROI number
+
                     roiNumber = np.argmax(vec_of_prob) + 1 # [1 ... num_roi's]
                     max_prob =  vec_of_prob[roiNumber - 1]
-#                     print('coord',x-xi,y-yi,z-zi)
-#                     print('MAx_prob',max_prob)
                     if max_prob != 0: # the max roi lies inside the atlas
                         dist = abs(xi) +  abs(yi)  + abs(zi)
                         if dist < old_dist or final_itr == [0,0,0]:
-#                             print('old_dist',old_dist)
                             old_dist = dist
-                            final_coord = [x-xi, y-yi, z-zi]
-                            final_itr = [xi,yi,zi]
-                            final_roi = roiNumber
+                            final_coord = [x-xi, y-yi, z-zi] # Cartesian Coordinates
+                            final_itr = [-xi,-yi,-zi] # Cartesian Coordinates
 
+
+                            if self.prob:
+                                final_roi = roiNumber
+                            else:
+                                final_roi = max_prob
+
+        # To convert the Cartesian Coordinates to MNI
+        if self.pixdim == 2:
+            final_coord = self.XYZ2MNI2mm(final_coord)
+            final_itr = [i * 2 for i in final_itr] # One Voxel = 2mm
+        elif self.pixdim == 1:
+            final_coord = self.XYZ2MNI1mm(final_coord)
+
+
+
+        """
+        Note:
+        Due to the conversion of MNI to XYZ and back the precision is lost if
+        the 2mm atlas is used. The precision lost is just +- 1mm. For example:
+        Input MNI: [24 -13 30]
+        Output:
+            final_itr: [6, 0, -4] But,
+            final_coord: [18, -14, 26]. There is an error in Y coordinate.
+
+        """
         return final_roi, final_coord, final_itr
 
 
@@ -211,13 +246,51 @@ class queryBrainnetomeROI:
 
 
 
-# In[67]:
 if __name__ == "__main__":
-    atlas_path = 'brainnetomeAtlas/BNA-maxprob-thr0-1mm.nii.gz'
-    # atlasRegionsDescrpPath = '/home/varun/Projects/fmri/Autism-Connectome-Analysis-brain_connectivity/atlas/BNA_subregions.xlsx'
-    atlasRegionsDescrpPath = 'brainnetomeAtlas/BNA_subregions_machineReadable.xlsx'
-    q = queryBrainnetomeROI(atlas_path, atlasRegionsDescrpPath, False)
+
+    # Parser to parse commandline arguments
+
+    ap = argparse.ArgumentParser()
 
 
-    # In[68]:
-    q.queryDict(246) # Returns Lobe, Gyrus, Region and MNI Coordinates of the query ROI Number
+
+    ap.add_argument("-mni", "--mni", nargs='+', required=True,
+        help="MNI Coordinates space seperated")
+
+    ap.add_argument("-p", "--prob",  action='store_true', required=False,
+        help="-p True for using the probability maps")
+
+    args = vars(ap.parse_args())
+
+
+    # Reading the arguments
+    prob = args["prob"]
+
+    # Converting the numbers read as string to integers
+
+    MNI = list(map(int, args["mni"]))
+
+
+
+    base_path = '/home/varun/Projects/fmri/Autism-survey-connectivity-links-analysis/'
+
+    if prob:
+        atlas_path = base_path + 'brainnetomeAtlas/BNA-prob-2mm.nii'
+    else:
+        atlas_path = base_path + 'brainnetomeAtlas/BNA-maxprob-thr0-1mm.nii.gz'
+
+    atlasRegionsDescrpPath = base_path + 'brainnetomeAtlas/BNA_subregions_machineReadable.xlsx'
+    obj = queryBrainnetomeROI(atlas_path, atlasRegionsDescrpPath)
+
+    # Get the region from the above defined atlas
+    print(obj.getAtlasRegions(MNI))
+    cont = True
+    while(cont):
+        MNI = input('Type space seperated MNI (Or Type q to quit): ')
+        if MNI == 'q':
+            cont = False
+            continue
+
+        # Converting the numbers read as string to integers
+        MNI = list(map(int, MNI.split()))
+        print(obj.getAtlasRegions(MNI))
