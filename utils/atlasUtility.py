@@ -6,6 +6,8 @@ import numpy as np
 import math
 import xml.etree.ElementTree as ET
 from tqdm import tqdm
+import argparse
+
 
 
 # In[66]:
@@ -35,13 +37,13 @@ class queryAtlas:
 
 
     '''
-    def __init__(self,atlasPaths,atlasLabelsPaths, prob = False):
+    def __init__(self,atlasPaths,atlasLabelsPaths):
         self.atlasPaths = atlasPaths
         self.atlasLabelsPaths = atlasLabelsPaths
-        self.prob = prob
         self.itr = [0,1,-1,2,-2,3,-3] # represents the neighbourhood to search the queryVoxel
         self.atlas_list = []
         self.pixdim_list = []
+        self.WM_HEMISPHERE_INFO = False
 
         for index,atlasPath in enumerate(self.atlasPaths):
 
@@ -49,6 +51,19 @@ class queryAtlas:
             atlas = _atlas.get_data()
 
             self.atlas_list.append(atlas)
+
+            """
+            Following Code to set the prob variable to True if user has
+            entered probability maps and False if fixed labeled atlas is entered
+            TODO Raise Exception if all the atlases do not have common dimensions.
+            """
+            atlas_shape_len = len(atlas.shape)
+            if atlas_shape_len == 4:
+                self.prob = True
+            elif atlas_shape_len == 3:
+                self.prob = False
+            else:
+                raise Exception('Exception: Atlas of unknown shape. Exiting!')
 
 
             print('Atlas read')
@@ -144,107 +159,128 @@ class queryAtlas:
 
 
         atlasIndex = 0
-        # Enumerates over all the given atlases and stops when the region is found in some atlas.
 
-#         global_roiNumber = None
-#         global_final_coord = None
-#         global_final_itr = None
-#         global_max_prob = 0
-#         global_max_prob_index = 0
 
-        _roiNumber, _final_coord, _final_itr, _max_prob = None, None, None, None
+        _roiNumber, _final_coord, _final_itr, _max_prob = [], None, None, None
 
         out = []
         for index,atlasPath in enumerate(self.atlasPaths):
 
             if roiNumber == None or self.prob == True:
-#                 _atlas = nib.load(atlasPath)
-#                 atlas = _atlas.get_data()
-#                 if _atlas.header['pixdim'][1] == 2:
+
                 if self.pixdim_list[index] == 2:
                     x,y,z = self.MNI2XYZ2mm(coordMni)
-#                 elif _atlas.header['pixdim'][1] == 1:
                 elif self.pixdim_list[index] == 1:
                     x,y,z = self.MNI2XYZ1mm(coordMni)
                 else:
                     raise Exception('Unknown Pixel Dimension', _atlas.header['pixdim'][1] )
 
 
-#                 roiNumber = atlas[x,y,z]
                 if self.prob == False:
                     roiNumber = self.atlas_list[index][x,y,z]
+                    if roiNumber == 0: # Coordinate lies outside the atlas
+                        _roiNumber, _final_coord, _final_itr, _max_prob = self.get_neighbouring_coordinates(x,y,z,self.itr,index)
+
+                        if _roiNumber != None:
+                            roiNumber=_roiNumber[0]
+                            final_coord=_final_coord[0]
+                            final_itr=_final_itr[0]
+                            max_prob=_max_prob[0]
+                        else:
+                            roiNumber = None
+                            continue
+                    else:
+                        final_coord = [x,y,z]
+                        final_itr = [0,0,0]
+                        max_prob = 1
+
                 else:
-#                     vec_of_prob = self.atlas_list[index][x,y,z,:]
-#                     roiNumber = np.argmax(vec_of_prob) + 1 # [1 ... num_roi's]
-#                     max_prob =  vec_of_prob[roiNumber]
-#                     if max_prob == 0: # # Coordinate is outside the atlas
+                    # vec_of_prob = self.atlas_list[index][x,y,z,:]
+                    # roiNumber = np.argmax(vec_of_prob) + 1 # [1 ... num_roi's]
+                    # max_prob =  vec_of_prob[roiNumber - 1]
+                    # if True:#max_prob == 0: # # Coordinate is outside the atlas
+                    _roiNumber, _final_coord, _final_itr, _max_prob = self.get_neighbouring_coordinates(x,y,z,self.itr,index, largest= 3)
 
-                    _roiNumber, _final_coord, _final_itr, _max_prob = self.get_neighbouring_coordinates(x,y,z,self.itr,index, largest= 2)
-
-                    # Getting the Highest probability region
                     if len(_roiNumber) == 0:
                         continue
 
+                    # Getting the Highest probability region from 2 largest returned
                     roiNumber=_roiNumber[0]
                     final_coord=_final_coord[0]
                     final_itr=_final_itr[0]
                     max_prob=_max_prob[0]
+                    # else:
+                    #     final_coord = [x,y,z]
+                    #     final_itr = [0,0,0]
+                    #     max_prob = 1
 
 
 
-#                 print('ROI Number',roiNumber)
                 if roiNumber != 0:
                     roiName = self.roiName(self.atlasLabelsPaths[index], roiNumber)
 
                     roiName  = roiName.strip()
 
-                    if self.prob == True:
+                    # ----------------- When White Matter and Hemispheric information is not needed --------------------
+                    if not self.WM_HEMISPHERE_INFO:
 
-                        if roiName == 'Right Cerebral White Matter' or roiName == 'Left Cerebral White Matter'\
-                        or roiName == 'Left Cerebral Cortex' or roiName == 'Right Cerebral Cortex':
-                            # Look for second largest in the same atlas
-                            if len(_roiNumber) > 1: # If second highest prob region exists
-                                # Getting the second Highest probability region
-                                roiNumber=_roiNumber[1]
-                                final_coord=_final_coord[1]
-                                final_itr=_final_itr[1]
-                                max_prob=_max_prob[1]
-                                roiName = self.roiName(self.atlasLabelsPaths[index], roiNumber)
-                                roiName  = roiName.strip()
-                                if roiName == 'Right Cerebral White Matter' or roiName == 'Left Cerebral White Matter'\
-                        or roiName == 'Left Cerebral Cortex' or roiName == 'Right Cerebral Cortex':
-                                    continue # when both of the top 2 pics are irrelevant to us
+                        if self.prob == True:
+                            if roiName == 'Right Cerebral White Matter' or roiName == 'Left Cerebral White Matter'\
+                            or roiName == 'Left Cerebral Cortex' or roiName == 'Right Cerebral Cortex':
+                                # Look for second largest in the same atlas
+                                if len(_roiNumber) > 1: # If second highest prob region exists
+                                    # Getting the second Highest probability region
+                                    roiNumber=_roiNumber[1]
+                                    final_coord=_final_coord[1]
+                                    final_itr=_final_itr[1]
+                                    max_prob=_max_prob[1]
+                                    roiName = self.roiName(self.atlasLabelsPaths[index], roiNumber)
+                                    roiName  = roiName.strip()
+                                    if roiName == 'Right Cerebral White Matter'\
+                                    or roiName == 'Left Cerebral White Matter'\
+                                    or roiName == 'Left Cerebral Cortex'\
+                                    or roiName == 'Right Cerebral Cortex':
+                                        if len(_roiNumber) > 2: # If Third highest prob region exists
+                                            roiNumber=_roiNumber[2]
+                                            final_coord=_final_coord[2]
+                                            final_itr=_final_itr[2]
+                                            max_prob=_max_prob[2]
+                                            roiName = self.roiName(self.atlasLabelsPaths[index], roiNumber)
+                                            roiName  = roiName.strip()
+                                            out.append([roiNumber, roiName ,final_coord ,final_itr, max_prob, index])
+                                    else:
+                                        # When the second Highest probability region in not irrelevant
+                                        out.append([roiNumber, roiName ,final_coord ,final_itr, max_prob, index])
 
 
-
-
+                                else:
+                                    # Second highest probability region does not exist
+                                    continue
                             else:
-    #                                 roiNumber = None
-    #                                 atlasIndex = atlasIndex + 1
+                                # Coordinate region is neither WM nor Hemispheric Info
+                                out.append([roiNumber, roiName ,final_coord ,final_itr, max_prob, index])
+
+                        else:
+                            # 3D Brain atlas is present i.e prob == False
+                            if roiName == 'Right Cerebral White Matter' or roiName == 'Left Cerebral White Matter'\
+                            or roiName == 'Left Cerebral Cortex' or roiName == 'Right Cerebral Cortex':
+                                roiNumber = None
+                                # atlasIndex = atlasIndex + 1 TODO is it important?
                                 continue
+                            else:
+                                out.append([roiNumber, roiName ,final_coord ,final_itr, max_prob, index])
 
-    #                         if global_max_prob < max_prob:
-    #                             global_max_prob_index = atlasIndex
-    #                             global_max_prob = max_prob
-
+                    # ------------------------------------------------------------------------------------------------------
+                    else:
+                        # WM_HEMISPHERE_INFO is True i.e. this info is required
                         out.append([roiNumber, roiName ,final_coord ,final_itr, max_prob, index])
 
 
-                    else:
-                        if roiName == 'Right Cerebral White Matter' or roiName == 'Left Cerebral White Matter'\
-                        or roiName == 'Left Cerebral Cortex' or roiName == 'Right Cerebral Cortex':
-                            roiNumber = None
-                            atlasIndex = atlasIndex + 1
-                            continue
-
-
-
-
                 else:
+                    # roiNumber is zero so set it to None and move to next atlas
                     roiNumber = None
-                    atlasIndex = atlasIndex + 1
+                    # atlasIndex = atlasIndex + 1 TODO is it important?
 
-#         print('OUT:',out)
 
         """
         Loop over the 'out' list
@@ -259,19 +295,16 @@ class queryAtlas:
 
                 dist = abs(output[3][0]) + abs(output[3][1]) + abs(output[3][2])
                 if final_min_dist > dist:
-#                     final_output_idx = idx
                     final_min_dist = dist
 
             final_max_prob = 0
             for idx,output in enumerate(out): # To find the max probability if there are multiple min arrays dist
                 dist = abs(output[3][0]) + abs(output[3][1]) + abs(output[3][2])
-#                 print('Dist and final min dist',dist, final_min_dist)
                 if dist == final_min_dist:
                     if final_max_prob < output[4]:
                         final_max_prob = output[4]
                         final_output_idx = idx
 
-#             print('final_output_idx',final_output_idx)
 
 
             if len(out) == 0:
@@ -285,6 +318,38 @@ class queryAtlas:
                 roiNumber, roiName, atlasIndex = 0, None, None
 
         return int(roiNumber), roiName, atlasIndex
+
+
+    def _XYZ_2_MNI(self,xyz_list,atlas_index):
+        """
+        Input: List of Lists. Each list is x,y,z is cartesian coordinates
+        Converts the cartesian coordinates to MNI
+        Output: List of Lists. Each list is x,y,z is MNI coordinates
+        """
+        mni_list = []
+        for xyz in xyz_list:
+            if self.pixdim_list[atlas_index] == 2:
+                mni_list.append(self.XYZ2MNI2mm(xyz))
+            elif self.pixdim_list[atlas_index] == 1:
+                mni_list.append(self.XYZ2MNI1mm(xyz))
+        return mni_list
+
+    def _voxel_2_mm(self,voxel_coord_list,atlas_index):
+        """
+        Input: List of Lists. Each list is x,y,z displacement in terms of voxels
+        Converts the number of voxels shift to mm shift. That is basically
+        it converts the voxels to milimeter.
+        Output: List of Lists. Each list is x,y,z displacement in terms of mm
+        """
+        mm_cord_list = []
+        for voxel_coord in voxel_coord_list:
+            if self.pixdim_list[atlas_index] == 2:
+                mm_cord_list.append([i * 2 for i in voxel_coord]) # One Voxel = 2mm
+            elif self.pixdim_list[atlas_index] == 1:
+                mm_cord_list.append(voxel_coord)
+        return mm_cord_list
+
+
 
 
     def get_neighbouring_coordinates(self,x,y,z, itr, atlas_index, largest=1):
@@ -347,32 +412,45 @@ class queryAtlas:
                     coord_list = []
                     itr_list = []
                     max_prob_list = []
-                    vec_of_prob = np.array(self.atlas_list[atlas_index][x-xi,y-yi,z-zi,:])
+                    if self.prob:
+                        vec_of_prob = self.atlas_list[atlas_index][x-xi,y-yi,z-zi,:]
+                        # It's an array of multiple probability values
+                    else:
+                        vec_of_prob = np.array(
+                        [self.atlas_list[atlas_index][x-xi,y-yi,z-zi]])
+                        # It's an array of a single value i.e the ROI number
+
+                        largest = 1
+                        """Forced assignment as we are dealing with a
+                        static atlas and not region probability maps """
+
                     for counter in range(largest):
 
                         roiNumber = np.argmax(vec_of_prob) + 1 # [1 ... num_roi's]
                         max_prob =  vec_of_prob[roiNumber - 1]
-    #                     print('coord',x-xi,y-yi,z-zi)
-    #                     print('MAx_prob',max_prob)
                         if max_prob != 0: # the max roi lies inside the atlas
                             dist = abs(xi) +  abs(yi)  + abs(zi) # Distance metric
                             # check if the new distance 'dist' is less than the previously seen distance or not
                             if dist <= old_dist: #or final_itr == [0,0,0]
-#                                 print(old_dist, dist)
                                 old_dist = dist
                                 coord_list.append([x-xi, y-yi, z-zi])
                                 final_itr = [xi,yi,zi]
-#                                 print(final_itr)
                                 itr_list.append([xi,yi,zi])
-                                roi_list.append(roiNumber)
-                                max_prob_list.append(max_prob)
+                                if self.prob:
+                                    roi_list.append(roiNumber)
+                                    max_prob_list.append(max_prob)
+                                else:
+                                    roi_list.append(max_prob)
+                                    max_prob_list.append(1)
 
-                        vec_of_prob[roiNumber - 1] = 0 # to find second highest region
+                            vec_of_prob[roiNumber - 1] = 0 # to find second highest region
+                        else:
+                            final_roi_list, final_coord_list, final_itr_list, final_max_prob_list = None, None, None, None
 
                     if len(roi_list) != 0:
                         final_roi_list = roi_list
-                        final_coord_list = coord_list
-                        final_itr_list = itr_list
+                        final_coord_list = self._XYZ_2_MNI(coord_list, atlas_index)
+                        final_itr_list = self._voxel_2_mm(itr_list, atlas_index)
                         final_max_prob_list = max_prob_list
 
         return final_roi_list, final_coord_list, final_itr_list, final_max_prob_list
@@ -388,35 +466,87 @@ if __name__ == "__main__":
     # atlasLabelsPaths1 = ['hoAtlas/HarvardOxford-Cortical.xml','hoAtlas/HarvardOxford-Subcortical.xml',\
     #                     'cerebellumAtlas/Cerebellum_MNIflirt.xml']
 
-    atlasPaths1  = ['hoAtlas/HarvardOxford-sub-maxprob-thr0-1mm.nii.gz','hoAtlas/HarvardOxford-cort-maxprob-thr0-1mm.nii.gz',
-    'cerebellumAtlas/Cerebellum-MNIflirt-maxprob-thr0-1mm.nii.gz']
-
-    # atlasPaths1  = ['hoAtlas/HarvardOxford-sub-prob-1mm.nii.gz',\
-    # 'hoAtlas/HarvardOxford-cort-prob-1mm.nii.gz',
-    # 'cerebellumAtlas/Cerebellum-MNIflirt-prob-1mm.nii.gz']
-
-    atlasLabelsPaths1 = ['hoAtlas/HarvardOxford-Subcortical.xml','hoAtlas/HarvardOxford-Cortical.xml', \
-    'cerebellumAtlas/Cerebellum_MNIflirt.xml']
-
-
+    # atlasPaths1  = ['hoAtlas/HarvardOxford-sub-maxprob-thr0-1mm.nii.gz','hoAtlas/HarvardOxford-cort-maxprob-thr0-1mm.nii.gz',
+    # 'cerebellumAtlas/Cerebellum-MNIflirt-maxprob-thr0-1mm.nii.gz']
+    #
+    # # atlasPaths1  = ['hoAtlas/HarvardOxford-sub-prob-1mm.nii.gz',\
+    # # 'hoAtlas/HarvardOxford-cort-prob-1mm.nii.gz',
+    # # 'cerebellumAtlas/Cerebellum-MNIflirt-prob-1mm.nii.gz']
+    #
+    # atlasLabelsPaths1 = ['hoAtlas/HarvardOxford-Subcortical.xml','hoAtlas/HarvardOxford-Cortical.xml', \
+    # 'cerebellumAtlas/Cerebellum_MNIflirt.xml']
 
 
-    q1 = queryAtlas(atlasPaths1,atlasLabelsPaths1,False)
+    # Parser to parse commandline arguments
+
+    ap = argparse.ArgumentParser()
 
 
-    # In[71]:
-    # q1.getAtlasRegions([-6,62,-2])
-    q1.getAtlasRegions([47,-60, 4])
-    # q1.getAtlasRegions([33, -6, -6])
 
-    # In[72]:
+    ap.add_argument("-mni", "--mni", nargs='+', required=True,
+        help="MNI Coordinates space seperated")
 
-    # atlasPath2 = ['juelichAtlas/Juelich-maxprob-thr25-1mm.nii.gz']
-    atlasPath2 = ['juelichAtlas/Juelich-maxprob-thr0-1mm.nii.gz']
-    # atlasPath2 = ['juelichAtlas/Juelich-prob-1mm.nii.gz']
+    ap.add_argument("-p", "--prob",  action='store_true', required=False,
+        help="-p True for using the probability maps")
 
-    atlasLabelsPath2 = ['juelichAtlas/Juelich.xml']
-    q2 = queryAtlas(atlasPath2,atlasLabelsPath2,False)
+    args = vars(ap.parse_args())
 
-    # In[73]:
-    q2.getAtlasRegions([33, -6, -6])
+
+    # Reading the arguments
+    prob = args["prob"]
+
+    # Converting the numbers read as string to integers
+
+    MNI = list(map(int, args["mni"]))
+
+
+
+    base_path = '/home/varun/Projects/fmri/Autism-survey-connectivity-links-analysis/'
+
+    if prob:
+        atlas_paths = [
+        base_path + 'hoAtlas/HarvardOxford-sub-prob-1mm.nii.gz',
+        base_path + 'hoAtlas/HarvardOxford-cort-prob-1mm.nii.gz',
+        base_path + 'cerebellumAtlas/Cerebellum-MNIflirt-prob-1mm.nii.gz']
+    else:
+        atlas_paths = [
+        base_path + 'hoAtlas/HarvardOxford-sub-maxprob-thr0-1mm.nii.gz',
+        base_path + 'hoAtlas/HarvardOxford-cort-maxprob-thr0-1mm.nii.gz',
+        base_path + 'cerebellumAtlas/Cerebellum-MNIflirt-maxprob-thr0-1mm.nii.gz'
+        ]
+
+    atlas_labels_paths = [
+    base_path + 'hoAtlas/HarvardOxford-Subcortical.xml',
+    base_path + 'hoAtlas/HarvardOxford-Cortical.xml',
+    base_path + 'cerebellumAtlas/Cerebellum_MNIflirt.xml'
+    ]
+
+    obj = queryAtlas(atlas_paths,atlas_labels_paths)
+
+
+    print(obj.getAtlasRegions(MNI))
+
+    # Get the region from the above defined atlas
+
+    cont = True
+    while(cont):
+        MNI = input('Type space seperated MNI (Or Type q to quit): ')
+        if MNI == 'q':
+            cont = False
+            continue
+
+        # Converting the numbers read as string to integers
+        MNI = list(map(int, MNI.split()))
+        print(obj.getAtlasRegions(MNI))
+
+    # # In[72]:
+    #
+    # # atlasPath2 = ['juelichAtlas/Juelich-maxprob-thr25-1mm.nii.gz']
+    # atlasPath2 = ['juelichAtlas/Juelich-maxprob-thr0-1mm.nii.gz']
+    # # atlasPath2 = ['juelichAtlas/Juelich-prob-1mm.nii.gz']
+    #
+    # atlasLabelsPath2 = ['juelichAtlas/Juelich.xml']
+    # q2 = queryAtlas(atlasPath2,atlasLabelsPath2,False)
+    #
+    # # In[73]:
+    # q2.getAtlasRegions([33, -6, -6])
