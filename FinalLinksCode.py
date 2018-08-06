@@ -1,9 +1,7 @@
 
 # coding: utf-8
 
-# In[65]:
 
-# %%
 import pandas as pd
 import nibabel as nib
 import numpy as np
@@ -12,14 +10,20 @@ import xml.etree.ElementTree as ET
 from tqdm import tqdm
 from utils import atlasUtility as au
 from utils import brainnetomeUtility as bu
+import collections as co
 
 
-# %%
+
 class addAtlasNamestoCSV:
-    def __init__(self,BNAtlasObj,HOAtlasObj,JuliechAtlasObj):
-        self.BNAtlasObj = BNAtlasObj
-        self.HOAtlasObj = HOAtlasObj
-        self.JuliechAtlasObj = JuliechAtlasObj
+    def __init__(self, BNA_atlas_dict, atlas_dict_list = None):
+        self.BNAtlasObj = BNA_atlas_dict['obj']
+        # self.BNAtlasObj = BNA_atlas_dict['name']
+
+        # self.BNAtlasObj = BNAtlasObj
+        if atlas_dict_list:
+            self.atlas_dict_list = atlas_dict_list
+        # self.HOAtlasObj = HOAtlasObj
+        # self.JuliechAtlasObj = JuliechAtlasObj
 
     @staticmethod
     def extract_columns_and_save_CSV(self,csv_path, column_index_include, filename):
@@ -35,7 +39,7 @@ class addAtlasNamestoCSV:
         return df_extracted
 
 
-    def addNameCSV(self, csvPath, filename, column_index_include):
+    def addNameCSV(self, csvPath, filename, column_index_include, hemis_from_csv = False):
         # read CSV file
         df = pd.read_csv(csvPath)
 
@@ -43,20 +47,40 @@ class addAtlasNamestoCSV:
 
         dfExtra = df.iloc[:,column_index_include]
 
-        dfMatrix = df.as_matrix(['S_No','PaperID','SeedName', 'SeedMNI', 'UnderConnectivityName', 'UnderConnectivityMNI', 'OverConnectivityName',\
-             'OverConnectivityMNI'])
+        essential_columns = [
+        'S_No','PaperID','SeedName', 'SeedMNI', 'UnderConnectivityName',
+        'UnderConnectivityMNI', 'OverConnectivityName', 'OverConnectivityMNI'
+        ]
+
+        if hemis_from_csv:
+            essential_columns.extend(['SeedHem', 'UnderHem', 'OverHem'])
+
+
+        dfMatrix = df.as_matrix(essential_columns)
 
 
         df_new = pd.DataFrame()
 
+        # 'if' condition to read the Hemispheres from the csv
         for ix, row in enumerate(tqdm(dfMatrix)):
-            s_no, paperID, seedName, seedMNI, underConnectivityName, underConnectedMNI,overConnectivityName, overConnectedMNI = row
+            if hemis_from_csv:
+                s_no, paperID, seedName, seedMNI, underConnectivityName,\
+                underConnectedMNI, overConnectivityName, overConnectedMNI,\
+                SeedHem, UnderHem, OverHem = row
+            else:
+                s_no, paperID, seedName, seedMNI, underConnectivityName,\
+                underConnectedMNI,overConnectivityName, overConnectedMNI = row
 
-            underConnectivityNameHO = None
-            overConnectivityNameHO = None
-            hemisphereSeed=None
-            hemisphereUC=None
-            hemisphereOC=None
+
+
+            # underConnectivityNameHO = None
+            # overConnectivityNameHO = None
+
+            # Hemispheric information of the seed and target
+            hemisphereSeed = None
+            hemisphereUC = None
+            hemisphereOC = None
+
 
 
             #-------Check if MNI is NAN-----
@@ -89,17 +113,35 @@ class addAtlasNamestoCSV:
                 seed_z = seedMNIint[2]
 
 
-                _,seedNameHO,_ = self.HOAtlasObj.getAtlasRegions(seedMNIint)
-                _,seedNameJuliech,_ = self.JuliechAtlasObj.getAtlasRegions(seedMNIint)
-
+                # Brainnetome
                 _,seedLobe, seedGyrus, seedNameBN = self.BNAtlasObj.getAtlasRegions(seedMNIint)
 
+                # Loop over atlases (For Seed)
+                if self.atlas_dict_list:
+                    seedName_list = []
+                    for atlas_dict in self.atlas_dict_list:
+                        obj = atlas_dict['obj']
+                        _, seedname, _ = obj.getAtlasRegions(seedMNIint)
+                        seedName_list.append(seedname)
+
+
+                # _,seedNameHO,_ = self.HOAtlasObj.getAtlasRegions(seedMNIint)
+                # _,seedNameJuliech,_ = self.JuliechAtlasObj.getAtlasRegions(seedMNIint)
+
+
             else:
-                seedNameHO = np.nan
-                seedNameJuliech = np.nan
+                # Brainnetome atlas
                 seedLobe = np.nan
                 seedGyrus = np.nan
                 seedNameBN = np.nan
+
+                # Loop over atlases (For Seed)
+                if self.atlas_dict_list:
+                    seedName_list = []
+                    for atlas_dict in self.atlas_dict_list:
+                        seedName_list.append(np.nan)
+
+
                 hemisphereSeed = np.nan
                 seed_x = np.nan
                 seed_y = np.nan
@@ -133,37 +175,66 @@ class addAtlasNamestoCSV:
                 connectivity_y = underConnectedMNIint[1]
                 connectivity_z = underConnectedMNIint[2]
 
-                _,connectivityNameHO,_ = self.HOAtlasObj.getAtlasRegions(underConnectedMNIint)
-                _,connectivityNameJuliech,_ = self.JuliechAtlasObj.getAtlasRegions(underConnectedMNIint)
+                # Loop over atlases (For target)
+                if self.atlas_dict_list:
+                    connectivityName_list = []
+                    for atlas_dict in self.atlas_dict_list:
+                        obj = atlas_dict['obj']
+                        _, connectivityname, _ = obj.getAtlasRegions(underConnectedMNIint)
+                        connectivityName_list.append(connectivityname)
+
+                # _,connectivityNameHO,_ = self.HOAtlasObj.getAtlasRegions(underConnectedMNIint)
+                # _,connectivityNameJuliech,_ = self.JuliechAtlasObj.getAtlasRegions(underConnectedMNIint)
 
                 _,connectivityLobe, connectivityGyrus, connectivityNameBN = self.BNAtlasObj.getAtlasRegions(underConnectedMNIint)
 
+                # Construct the dictionary in the loop and then make it a dataframe
 
-                _df = pd.DataFrame({'S_No': [s_no],
-                                    'PaperID':[paperID],
-                                    'SeedHemisphere':[hemisphereSeed],
-                                     'SeedLobe':[seedLobe],
-                                     'SeedGyrus':[seedGyrus],
-                                     'SeedNameBN':[seedNameBN],
-                                     'SeedNameHO':[seedNameHO],
-                                     'SeedNameJuliech':[seedNameJuliech],
-                                     'SeedName':[seedName],
-                                     'Seed_X':[seed_x],
-                                     'Seed_Y':[seed_y],
-                                     'Seed_Z':[seed_z],
-                                     'ConnectivityHemisphere':[hemisphereUC],
-                                     'ConnectivityLobe':[connectivityLobe],
-                                     'ConnectivityGyrus':[connectivityGyrus],
-                                     'ConnectivityNameBN':[connectivityNameBN],
-                                     'ConnectivityNameHO':[connectivityNameHO],
-                                     'ConnectivityNameJuliech':[connectivityNameJuliech],
-                                     'ConnectivityName':[underConnectivityName],
-                                     'Connectivity_X':[connectivity_x],
-                                     'Connectivity_Y':[connectivity_y],
-                                     'connectivity_Z':[connectivity_z],
-                                     'Under(-1)/Over(1)Connectivity':[-1],
+                dataframe_dict = co.OrderedDict({
+                                 'S_No': [s_no],
+                                 'PaperID':[paperID],
+                                 'SeedHemisphere':[hemisphereSeed],
+                                 'SeedLobe':[seedLobe],
+                                 'SeedGyrus':[seedGyrus],
+                                 'SeedNameBN':[seedNameBN]})
 
-              })
+                # Add more atlas names (Seed)
+                if self.atlas_dict_list:
+                    for idx, atlas_dict in enumerate(self.atlas_dict_list):
+                        name = atlas_dict['name']
+                        dataframe_dict['SeedName'+name] = [seedName_list[idx]]
+
+
+                _dataframe_dict = co.OrderedDict({
+                                 'SeedName':[seedName],
+                                 'Seed_X':[seed_x],
+                                 'Seed_Y':[seed_y],
+                                 'Seed_Z':[seed_z],
+                                 'ConnectivityHemisphere':[hemisphereUC],
+                                 'ConnectivityLobe':[connectivityLobe],
+                                 'ConnectivityGyrus':[connectivityGyrus],
+                                 'ConnectivityNameBN':[connectivityNameBN]})
+
+                dataframe_dict.update(_dataframe_dict)
+
+
+                # Add more atlas names (Target)
+                if self.atlas_dict_list:
+                    for idx, atlas_dict in enumerate(self.atlas_dict_list):
+                        name = atlas_dict['name']
+                        dataframe_dict['ConnectivityName'+name] = [connectivityName_list[idx]]
+
+                _dataframe_dict = co.OrderedDict({
+                                 'ConnectivityName':[underConnectivityName],
+                                 'Connectivity_X':[connectivity_x],
+                                 'Connectivity_Y':[connectivity_y],
+                                 'connectivity_Z':[connectivity_z],
+                                 'Under(-1)/Over(1)Connectivity':[-1]})
+
+
+                dataframe_dict.update(_dataframe_dict)
+
+                _df = pd.DataFrame(dataframe_dict)
 
 
                 dat1 = dfExtra[ix:ix+1]
@@ -201,42 +272,67 @@ class addAtlasNamestoCSV:
                 connectivity_y = overConnectedMNIint[1]
                 connectivity_z = overConnectedMNIint[2]
 
-                _,connectivityNameHO,_ = self.HOAtlasObj.getAtlasRegions(overConnectedMNIint)
-                _,connectivityNameJuliech,_ = self.JuliechAtlasObj.getAtlasRegions(overConnectedMNIint)
+                # _,connectivityNameHO,_ = self.HOAtlasObj.getAtlasRegions(overConnectedMNIint)
+                # _,connectivityNameJuliech,_ = self.JuliechAtlasObj.getAtlasRegions(overConnectedMNIint)
+
+                # Loop over atlases (For target)
+                if self.atlas_dict_list:
+                    connectivityName_list = []
+                    for atlas_dict in self.atlas_dict_list:
+                        obj = atlas_dict['obj']
+                        _, connectivityname, _ = obj.getAtlasRegions(overConnectedMNIint)
+                        connectivityName_list.append(connectivityname)
 
                 _,connectivityLobe, connectivityGyrus, connectivityNameBN = self.BNAtlasObj.getAtlasRegions(overConnectedMNIint)
 
 
-                _df = pd.DataFrame({'S_No': [s_no],
-                                    'PaperID':[paperID],
-                                    'SeedHemisphere':[hemisphereSeed],
-                                     'SeedLobe':[seedLobe],
-                                     'SeedGyrus':[seedGyrus],
-                                     'SeedNameBN':[seedNameBN],
-                                     'SeedNameHO':[seedNameHO],
-                                     'SeedNameJuliech':[seedNameJuliech],
-                                     'SeedName':[seedName],
-                                     'Seed_X':[seed_x],
-                                     'Seed_Y':[seed_y],
-                                     'Seed_Z':[seed_z],
-                                     'ConnectivityHemisphere':[hemisphereOC],
-                                     'ConnectivityLobe':[connectivityLobe],
-                                     'ConnectivityGyrus':[connectivityGyrus],
-                                     'ConnectivityNameBN':[connectivityNameBN],
-                                     'ConnectivityNameHO':[connectivityNameHO],
-                                     'ConnectivityNameJuliech':[connectivityNameJuliech],
-                                     'ConnectivityName':[overConnectivityName],
-                                     'Connectivity_X':[connectivity_x],
-                                     'Connectivity_Y':[connectivity_y],
-                                     'connectivity_Z':[connectivity_z],
-                                     'Under(-1)/Over(1)Connectivity':[1],
+                # Construct the dictionary in the loop and then make it a dataframe
 
-              })
+                dataframe_dict = co.OrderedDict({
+                                 'S_No': [s_no],
+                                 'PaperID':[paperID],
+                                 'SeedHemisphere':[hemisphereSeed],
+                                 'SeedLobe':[seedLobe],
+                                 'SeedGyrus':[seedGyrus],
+                                 'SeedNameBN':[seedNameBN]})
+
+                # Add more atlas names (Seed)
+                if self.atlas_dict_list:
+                    for idx, atlas_dict in enumerate(self.atlas_dict_list):
+                        name = atlas_dict['name']
+                        dataframe_dict['SeedName'+name] = [seedName_list[idx]]
 
 
+                _dataframe_dict = co.OrderedDict({
+                                 'SeedName':[seedName],
+                                 'Seed_X':[seed_x],
+                                 'Seed_Y':[seed_y],
+                                 'Seed_Z':[seed_z],
+                                 'ConnectivityHemisphere':[hemisphereOC],
+                                 'ConnectivityLobe':[connectivityLobe],
+                                 'ConnectivityGyrus':[connectivityGyrus],
+                                 'ConnectivityNameBN':[connectivityNameBN]})
+
+                dataframe_dict.update(_dataframe_dict)
 
 
+                # Add more atlas names (Target)
+                if self.atlas_dict_list:
+                    for idx, atlas_dict in enumerate(self.atlas_dict_list):
+                        name = atlas_dict['name']
+                        dataframe_dict['ConnectivityName'+name] = [connectivityName_list[idx]]
 
+                _dataframe_dict = co.OrderedDict({
+                                 'ConnectivityName':[overConnectivityName],
+                                 'Connectivity_X':[connectivity_x],
+                                 'Connectivity_Y':[connectivity_y],
+                                 'connectivity_Z':[connectivity_z],
+                                 'Under(-1)/Over(1)Connectivity':[1]})
+
+
+                dataframe_dict.update(_dataframe_dict)
+
+                _df = pd.DataFrame(dataframe_dict)
 
                 dat1 = dfExtra[ix:ix+1]
                 dat2 = _df
@@ -250,17 +346,32 @@ class addAtlasNamestoCSV:
 
 
 
-        cols=['S_No','PaperID','SeedHemisphere','SeedLobe','SeedGyrus', 'SeedNameBN',\
-                                       'SeedNameHO','SeedNameJuliech','SeedName',\
-                                       'Seed_X','Seed_Y','Seed_Z', 'ConnectivityHemisphere','ConnectivityLobe',
-                                       'ConnectivityGyrus','ConnectivityNameBN',\
-                                       'ConnectivityNameHO','ConnectivityNameJuliech','ConnectivityName','Connectivity_X',\
-                                       'Connectivity_Y','connectivity_Z', 'Under(-1)/Over(1)Connectivity']
+        cols=[
+        'S_No','PaperID','SeedHemisphere','SeedLobe','SeedGyrus', 'SeedNameBN'
+        ]
+
+        if self.atlas_dict_list:
+            for idx, atlas_dict in enumerate(self.atlas_dict_list):
+                cols.append('SeedName'+atlas_dict['name'])
+
+        cols.extend([
+        'SeedName', 'Seed_X','Seed_Y','Seed_Z',
+        'ConnectivityHemisphere','ConnectivityLobe',
+        'ConnectivityGyrus','ConnectivityNameBN'])
+
+
+        if self.atlas_dict_list:
+            for idx, atlas_dict in enumerate(self.atlas_dict_list):
+                cols.append('ConnectivityName'+atlas_dict['name'])
+
+        cols.extend([
+        'ConnectivityName', 'Connectivity_X', 'Connectivity_Y',
+        'connectivity_Z', 'Under(-1)/Over(1)Connectivity'])
 
 
 
         df_new = df_new.loc[:,dfExtra.columns.append(pd.Index(cols))]
-#         fileName = 'connectivityResults2.csv'1
+
 
         print('Saving the CSV file of links at %s'% filename)
         df_new.to_csv(filename,index=False)
@@ -329,11 +440,11 @@ class addAtlasNamestoCSV:
 
         for ix1, (Index, row1) in  tqdm(enumerate(df.iterrows())):
             for ix2, row2 in df[ix1+1:].iterrows():
-#                 print(row1[1], row2[1]) # printing S_no pairs
+                # print(row1[1], row2[1]) # printing S_no pairs
                 # if all the columns match/ Same links
                 node1 = {tuple(row1[_columns_match_index[0:math.floor(len(_columns_match_index)/2)]]), tuple(row1[_columns_match_index[math.floor(len(_columns_match_index)/2):]])}
                 node2 = {tuple(row2[_columns_match_index[0:math.floor(len(_columns_match_index)/2)]]), tuple(row2[_columns_match_index[math.floor(len(_columns_match_index)/2):]])}
-#                 print('Node 1 and 2', node1, node2)
+                # print('Node 1 and 2', node1, node2)
                 # Created the above nodes to make sure that the link AB and BA are treated equally
                 if node1 == node2:
                     if (row1[connectivity_column_index] !=  row2[connectivity_column_index]).sum() == len(connectivity_column_index):
@@ -392,24 +503,35 @@ class addAtlasNamestoCSV:
     @staticmethod
     def order_links_end_points(in_file,links_columns,links_columns_all_details,out_file):
         """
-        Code to make all the same links have same end points so that they can be beneficial in the creating pivot table
-        links_columns: The columns representing the Hemisphere and Names of the regions of both the link end points
-        links_columns_all_details: The columns representing all the other details associated with the node such as
+        Update: No Need of this function as we will introducing synthetic links
+        using and then taking care of it using pivot tableself.
+        Code to make all the same links have same end points so that they can
+        be beneficial in the creating pivot table
+        links_columns: The columns representing the Hemisphere and Names of the
+        regions of both the link end points
+        links_columns_all_details: The columns representing all the other
+        details associated with the node such as
         MNI coordinates, names according to other atlases etc.
 
         Returns the ordered dataframe and saves the csv file
 
-        Usage: className.order_links_end_points(in_file,links_columns,links_columns_all_details,out_file)
-        links_columns_all_details: Divides this vector into 2 - source and destination details and then swaps them
+        Usage: className.order_links_end_points(in_file,links_columns,
+                                                links_columns_all_details,
+                                                out_file)
+        links_columns_all_details: Divides this vector into 2 -
+        source and destination details and then swaps them
         """
 
         df = pd.read_csv(in_file)#.iloc[:,1:]
         # links_columns =  [41,45,51,55]
-        links_node_swapped_columns = links_columns[math.floor(len(links_columns)/2):] + links_columns[0:math.floor(len(links_columns)/2)]
+        links_node_swapped_columns = links_columns[math.floor(len(links_columns)/2):] + \
+                                     links_columns[0:math.floor(len(links_columns)/2)]
 
 
         # links_columns_all_details =  list(np.arange(41,61))
-        links_node_swapped_columns_all_details = links_columns_all_details[math.floor(len(links_columns_all_details)/2):] + links_columns_all_details[0:math.floor(len(links_columns_all_details)/2)]
+        links_node_swapped_columns_all_details = \
+        links_columns_all_details[math.floor(len(links_columns_all_details)/2):] +\
+        links_columns_all_details[0:math.floor(len(links_columns_all_details)/2)]
 
 
         for ix1, (Index, row1) in  tqdm(enumerate(df.iterrows())):
@@ -470,14 +592,21 @@ class addAtlasNamestoCSV:
 
                 print('swapped details of ',ix1)
 
-            # import ipdb; ipdb.set_trace()
 
+        """
+        Create new column denoting if a link is synthetic or not.
+        """
+        # Putting synthetic = 1 for the new links created
         df_new = df_new.assign(synthetic = np.ones(df_new.shape[0]))
+        # Putting synthetic = 0 for the new links created
         df = df.assign(synthetic = np.zeros(df.shape[0]))
 
         df = df.append(df_new)
 
-
+        """
+        Appending the dataframe containing synthetic links (synthetic = 0)
+        to the original dataframe with real links (synthetic = 0)
+        """
         df.to_csv(out_file, index=False)
 
         return df
@@ -488,7 +617,7 @@ class addAtlasNamestoCSV:
 def show_columns(df):
     """
     This function gives a quick viwe of what are the columns and their corresponding indices
-    of a csv file or dataframe.
+    of a csv file or dataframe. It is quite handy while debugging
 
     Input: CSV file path or a pandas Dataframe
     Output: Displays the columns along with their index
@@ -512,16 +641,19 @@ if __name__ == "__main__":
     ORDER_LINK_NODES = False
 
 
-    # atlas_path = 'brainnetomeAtlas/BNA-maxprob-thr0-1mm.nii.gz'
-    atlas_path = 'brainnetomeAtlas/BNA-prob-2mm.nii.gz'
+    atlas_path = 'brainnetomeAtlas/BNA-maxprob-thr25-1mm.nii.gz'
+    # atlas_path = 'brainnetomeAtlas/BNA-prob-2mm.nii.gz'
     atlasRegionsDescrpPath = 'brainnetomeAtlas/BNA_subregions_machineReadable.xlsx'
 
-    BNAtlasObj = bu.queryBrainnetomeROI(atlas_path, atlasRegionsDescrpPath,True)
+    BNAtlasObj = bu.queryBrainnetomeROI(atlas_path, atlasRegionsDescrpPath)
 
 
-    # atlasPaths1  = ['hoAtlas/HarvardOxford-cort-maxprob-thr25-2mm.nii.gz',\
-    #                'hoAtlas/HarvardOxford-sub-maxprob-thr25-2mm.nii.gz',
-    #                'cerebellumAtlas/Cerebellum-MNIflirt-maxprob-thr25-1mm.nii.gz']
+    atlasPaths1  = [
+    'hoAtlas/HarvardOxford-cort-maxprob-thr25-1mm.nii.gz',
+    'hoAtlas/HarvardOxford-sub-maxprob-thr25-1mm.nii.gz',
+    'cerebellumAtlas/Cerebellum-MNIflirt-maxprob-thr25-1mm.nii.gz'
+    ]
+
     # atlasLabelsPaths1 = ['hoAtlas/HarvardOxford-Cortical.xml','hoAtlas/HarvardOxford-Subcortical.xml',\
     #                     'cerebellumAtlas/Cerebellum_MNIflirt.xml']
 
@@ -529,34 +661,46 @@ if __name__ == "__main__":
     #                'hoAtlas/HarvardOxford-cort-maxprob-thr0-1mm.nii.gz',
     #                'cerebellumAtlas/Cerebellum-MNIflirt-maxprob-thr0-1mm.nii.gz']
 
-    atlasPaths1  = ['hoAtlas/HarvardOxford-sub-prob-1mm.nii.gz',\
-                   'hoAtlas/HarvardOxford-cort-prob-1mm.nii.gz',
-                   'cerebellumAtlas/Cerebellum-MNIflirt-prob-1mm.nii.gz']
+    # atlasPaths1  = ['hoAtlas/HarvardOxford-sub-prob-1mm.nii.gz',\
+    # 'hoAtlas/HarvardOxford-cort-prob-1mm.nii.gz',
+    # 'cerebellumAtlas/Cerebellum-MNIflirt-prob-1mm.nii.gz']
 
-    atlasLabelsPaths1 = ['hoAtlas/HarvardOxford-Subcortical.xml','hoAtlas/HarvardOxford-Cortical.xml',\
-                        'cerebellumAtlas/Cerebellum_MNIflirt.xml']
+    atlasLabelsPaths1 = [
+    'hoAtlas/HarvardOxford-Cortical.xml',
+    'hoAtlas/HarvardOxford-Subcortical.xml',
+    'cerebellumAtlas/Cerebellum_MNIflirt.xml'
+    ]
 
 
-    HOAtlasObj = au.queryAtlas(atlasPaths1,atlasLabelsPaths1,True)
+    HOAtlasObj = au.queryAtlas(atlasPaths1,atlasLabelsPaths1)
 
 
-    # atlasPath2 = ['juelichAtlas/Juelich-maxprob-thr25-1mm.nii.gz']
+    atlasPath2 = ['juelichAtlas/Juelich-maxprob-thr25-1mm.nii.gz']
     # atlasPath2 = ['juelichAtlas/Juelich-prob-1mm.nii.gz']
-    # atlasLabelsPath2 = ['juelichAtlas/Juelich.xml']
-    #
-    # JuliechAtlasObj = au.queryAtlas(atlasPath2,atlasLabelsPath2,True)
+    atlasLabelsPath2 = ['juelichAtlas/Juelich.xml']
+
+    JuliechAtlasObj = au.queryAtlas(atlasPath2,atlasLabelsPath2)
 
 
-    atlasPath3 = ['Schaefer_4d_Atlas_7_Networks.nii.gz']
-    atlasLabelsPath3 = ['schaeferAtlas/Schaefer_4d_Atlas_7_Networks_1mm.xml']
-    SchaeferAtlasObj = au.queryAtlas(atlasPath3, atlasLabelsPath3, True)
+    # atlasPath3 = ['Schaefer_4d_Atlas_7_Networks.nii.gz']
+    # atlasLabelsPath3 = ['schaeferAtlas/Schaefer_4d_Atlas_7_Networks_1mm.xml']
+    # SchaeferAtlasObj = au.queryAtlas(atlasPath3, atlasLabelsPath3)
 
 
     csvPath = 'csv_input/als.csv'
     # q = addAtlasNamestoCSV(BNAtlasObj, HOAtlasObj, JuliechAtlasObj)
 
 
-    q = addAtlasNamestoCSV(BNAtlasObj, HOAtlasObj, SchaeferAtlasObj)
+    # ------------------------Atlas dictionary--------------------------------
+    HO_atlas_dict = {'obj': HOAtlasObj, 'name': 'HO'}
+    juliech_atlas_dict = {'obj': JuliechAtlasObj, 'name':'Juliech'}
+    BNA_atlas_dict = {'obj': BNAtlasObj, 'name':'BN'}
+
+    atlas_dict = [HO_atlas_dict, juliech_atlas_dict]
+
+    # ------------------------------------------------------------------------
+
+    q = addAtlasNamestoCSV(BNA_atlas_dict, atlas_dict)
 
 
     # columns_index_include = [0,1,28,29,30,31]
@@ -607,8 +751,9 @@ if __name__ == "__main__":
     # ------------------------------------
     # Include synthetic link
     if SYNTHETIC_LINKS:
+        print('Creating synthetic links')
         links_columns_all_details =  list(np.arange(40,60))
-        out_file = 'csv_output/finalLinks_blanks_dropped_synthetic_added_all_columns.csv'
+        out_file = 'csv_output/finalLinks_blanks_dropped_synthetic_added_all_columns_temp.csv'
         df = addAtlasNamestoCSV.add_synthetic_links(in_file,links_columns_all_details,out_file)
         in_file = 'csv_output/finalLinks_blanks_dropped_synthetic_added_all_columns.csv' # For next Step
 
