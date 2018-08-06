@@ -39,7 +39,20 @@ class addAtlasNamestoCSV:
         return df_extracted
 
 
-    def addNameCSV(self, csvPath, filename, column_index_include, hemis_from_csv = False):
+    @staticmethod
+    def get_hemisphere(coordinates):
+        """
+        Input: List of MNI coordinates
+        Output: 'L', 'R', 'C'
+        """
+        if coordinates[0] < 0:
+            return 'L'
+        elif coordinates[0] > 0:
+            return 'R'
+        else:
+            return 'C'
+
+    def addNameCSV(self, csvPath, filename, column_index_include, read_hemis_from_csv = False):
         # read CSV file
         df = pd.read_csv(csvPath)
 
@@ -52,7 +65,7 @@ class addAtlasNamestoCSV:
         'UnderConnectivityMNI', 'OverConnectivityName', 'OverConnectivityMNI'
         ]
 
-        if hemis_from_csv:
+        if read_hemis_from_csv:
             essential_columns.extend(['SeedHem', 'UnderHem', 'OverHem'])
 
 
@@ -63,13 +76,19 @@ class addAtlasNamestoCSV:
 
         # 'if' condition to read the Hemispheres from the csv
         for ix, row in enumerate(tqdm(dfMatrix)):
-            if hemis_from_csv:
+            if read_hemis_from_csv:
                 s_no, paperID, seedName, seedMNI, underConnectivityName,\
                 underConnectedMNI, overConnectivityName, overConnectedMNI,\
                 SeedHem, UnderHem, OverHem = row
+                # Some preprocessing before using hemisphere information
+                SeedHem = SeedHem.strip()
+                UnderHem = UnderHem.strip()
+                OverHem = OverHem.strip()
+
             else:
                 s_no, paperID, seedName, seedMNI, underConnectivityName,\
                 underConnectedMNI,overConnectivityName, overConnectedMNI = row
+
 
 
 
@@ -100,12 +119,15 @@ class addAtlasNamestoCSV:
 
                 assert (len(seedMNIint) == 3), "Seed MNI Coordinates Error at S.No %s" % s_no
 
-                if seedMNIint[0] < 0:
-                    hemisphereSeed = 'L'
-                elif seedMNIint[0] > 0:
-                    hemisphereSeed = 'R'
+                if read_hemis_from_csv:
+                    if SeedHem.upper() in ['L','R','C']:
+                        hemisphereSeed = SeedHem.upper()
+                    elif SeedHem == '-':
+                        hemisphereSeed = self.get_hemisphere(seedMNIint)
+                    else:
+                        raise Exception('Incorrect Hemisphere entry at Seed MNI: ',seedMNI)
                 else:
-                    hemisphereSeed = 'C'
+                    hemisphereSeed = self.get_hemisphere(seedMNIint)
 
 
                 seed_x = seedMNIint[0]
@@ -162,13 +184,16 @@ class addAtlasNamestoCSV:
 
                 assert (len(underConnectedMNIint) == 3), "Underconn. MNI Coordinates Error at S.No %s" % s_no
 
-                if underConnectedMNIint[0] < 0:
-                    hemisphereUC = 'L'
-                elif underConnectedMNIint[0] > 0:
-                    hemisphereUC = 'R'
-                else:
-                    hemisphereUC = 'C'
 
+                if read_hemis_from_csv:
+                    if UnderHem.upper() in ['L','R','C']:
+                        hemisphereUC = UnderHem.upper()
+                    elif UnderHem == '-':
+                        hemisphereUC = self.get_hemisphere(underConnectedMNIint)
+                    else:
+                        raise Exception('Incorrect Hemisphere entry at UC MNI: ',underConnectedMNIint)
+                else:
+                    hemisphereUC = self.get_hemisphere(underConnectedMNIint)
 
 
                 connectivity_x = underConnectedMNIint[0]
@@ -260,12 +285,16 @@ class addAtlasNamestoCSV:
 
                 assert (len(overConnectedMNIint) == 3), "Overconn. MNI Coordinates Error at S.No %s" % s_no
 
-                if overConnectedMNIint[0] < 0:
-                    hemisphereOC = 'L'
-                elif overConnectedMNIint[0] > 0:
-                    hemisphereOC = 'R'
+
+                if read_hemis_from_csv:
+                    if OverHem.upper() in ['L','R','C']:
+                        hemisphereOC = OverHem.upper()
+                    elif OverHem == '-':
+                        hemisphereOC = self.get_hemisphere(overConnectedMNIint)
+                    else:
+                        raise Exception('Incorrect Hemisphere entry at UC MNI: ',overConnectedMNIint)
                 else:
-                    hemisphereOC = 'C'
+                    hemisphereOC = self.get_hemisphere(overConnectedMNIint)
 
 
                 connectivity_x = overConnectedMNIint[0]
@@ -639,6 +668,8 @@ if __name__ == "__main__":
     CONSISTENT_INCONSISTENT_LINKS = False
     SYNTHETIC_LINKS = True
     ORDER_LINK_NODES = False
+    READ_HEMIS_FROM_CSV = True
+
 
 
     atlas_path = 'brainnetomeAtlas/BNA-maxprob-thr25-1mm.nii.gz'
@@ -711,7 +742,7 @@ if __name__ == "__main__":
     columns_index_include = list(np.arange(3,41))
 
     filename = 'csv_output/finalLinks_all_columns.csv'
-    df = q.addNameCSV(csvPath, filename, columns_index_include)
+    df = q.addNameCSV(csvPath, filename, columns_index_include, READ_HEMIS_FROM_CSV)
     # df = q.addNameCSV(csvPath, filename)
 
     # import pdb;pdb.set_trace()
