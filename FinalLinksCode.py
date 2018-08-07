@@ -664,54 +664,75 @@ def show_columns(df):
 
 if __name__ == "__main__":
 
+    REMOVE_BLANKS = False
     REMOVE_DUPLICATES =  False
     CONSISTENT_INCONSISTENT_LINKS = False
     SYNTHETIC_LINKS = True
     ORDER_LINK_NODES = False
     READ_HEMIS_FROM_CSV = True
 
+    prob = True
+
+    base_path = '/home/varun/Projects/fmri/Autism-survey-connectivity-links-analysis/'
 
 
-    atlas_path = 'brainnetomeAtlas/BNA-maxprob-thr25-1mm.nii.gz'
+
+
+
+
+    atlas_path = base_path + 'brainnetomeAtlas/BNA-maxprob-thr25-1mm.nii.gz'
     # atlas_path = 'brainnetomeAtlas/BNA-prob-2mm.nii.gz'
-    atlasRegionsDescrpPath = 'brainnetomeAtlas/BNA_subregions_machineReadable.xlsx'
+    atlasRegionsDescrpPath = \
+    base_path + 'brainnetomeAtlas/BNA_subregions_machineReadable.xlsx'
 
     BNAtlasObj = bu.queryBrainnetomeROI(atlas_path, atlasRegionsDescrpPath)
 
 
-    atlasPaths1  = [
-    'hoAtlas/HarvardOxford-cort-maxprob-thr25-1mm.nii.gz',
-    'hoAtlas/HarvardOxford-sub-maxprob-thr25-1mm.nii.gz',
-    'cerebellumAtlas/Cerebellum-MNIflirt-maxprob-thr25-1mm.nii.gz'
+    if prob:
+        atlas_paths = [
+        base_path + 'hoAtlas/HarvardOxford-cort-prob-1mm.nii.gz',
+        base_path + 'hoAtlas/HarvardOxford-sub-prob-1mm.nii.gz'
+        # base_path + 'cerebellumAtlas/Cerebellum-MNIflirt-prob-1mm.nii.gz'
+        ]
+        atlasPath2 = [
+        base_path + 'juelichAtlas/Juelich-prob-1mm.nii.gz'
+        ]
+        cerebellum_path = [
+        base_path + 'cerebellumAtlas/Cerebellum-MNIflirt-prob-1mm.nii.gz'
+        ]
+
+    else:
+        atlas_paths = [
+        base_path + 'hoAtlas/HarvardOxford-cort-maxprob-thr25-1mm.nii.gz',
+        base_path + 'hoAtlas/HarvardOxford-sub-maxprob-thr25-1mm.nii.gz'
+        # base_path + 'cerebellumAtlas/Cerebellum-MNIflirt-maxprob-thr25-1mm.nii.gz'
+        ]
+        atlasPath2 = [
+        base_path + 'juelichAtlas/Juelich-maxprob-thr25-1mm.nii.gz'
+        ]
+        cerebellum_path = [
+        base_path + 'cerebellumAtlas/Cerebellum-MNIflirt-maxprob-thr25-1mm.nii.gz'
+        ]
+
+    atlas_labels_paths = [
+    base_path + 'hoAtlas/HarvardOxford-Cortical.xml',
+    base_path + 'hoAtlas/HarvardOxford-Subcortical.xml'
+    # base_path + 'cerebellumAtlas/Cerebellum_MNIflirt.xml'
+    ]
+    atlasLabelsPath2 = [
+    base_path + 'juelichAtlas/Juelich.xml'
+    ]
+    cerebellum_labels_path = [
+    base_path + 'cerebellumAtlas/Cerebellum_MNIflirt.xml'
     ]
 
-    # atlasLabelsPaths1 = ['hoAtlas/HarvardOxford-Cortical.xml','hoAtlas/HarvardOxford-Subcortical.xml',\
-    #                     'cerebellumAtlas/Cerebellum_MNIflirt.xml']
-
-    # atlasPaths1  = ['hoAtlas/HarvardOxford-sub-maxprob-thr0-1mm.nii.gz',\
-    #                'hoAtlas/HarvardOxford-cort-maxprob-thr0-1mm.nii.gz',
-    #                'cerebellumAtlas/Cerebellum-MNIflirt-maxprob-thr0-1mm.nii.gz']
-
-    # atlasPaths1  = ['hoAtlas/HarvardOxford-sub-prob-1mm.nii.gz',\
-    # 'hoAtlas/HarvardOxford-cort-prob-1mm.nii.gz',
-    # 'cerebellumAtlas/Cerebellum-MNIflirt-prob-1mm.nii.gz']
-
-    atlasLabelsPaths1 = [
-    'hoAtlas/HarvardOxford-Cortical.xml',
-    'hoAtlas/HarvardOxford-Subcortical.xml',
-    'cerebellumAtlas/Cerebellum_MNIflirt.xml'
-    ]
 
 
-    HOAtlasObj = au.queryAtlas(atlasPaths1,atlasLabelsPaths1)
-
-
-    atlasPath2 = ['juelichAtlas/Juelich-maxprob-thr25-1mm.nii.gz']
-    # atlasPath2 = ['juelichAtlas/Juelich-prob-1mm.nii.gz']
-    atlasLabelsPath2 = ['juelichAtlas/Juelich.xml']
+    HOAtlasObj = au.queryAtlas(atlas_paths,atlas_labels_paths)
 
     JuliechAtlasObj = au.queryAtlas(atlasPath2,atlasLabelsPath2)
 
+    cerebellum_atlas_obj = au.queryAtlas(cerebellum_path,cerebellum_labels_path)
 
     # atlasPath3 = ['Schaefer_4d_Atlas_7_Networks.nii.gz']
     # atlasLabelsPath3 = ['schaeferAtlas/Schaefer_4d_Atlas_7_Networks_1mm.xml']
@@ -724,10 +745,11 @@ if __name__ == "__main__":
 
     # ------------------------Atlas dictionary--------------------------------
     HO_atlas_dict = {'obj': HOAtlasObj, 'name': 'HO'}
+    cerebellum_atlas_dict = {'obj': cerebellum_atlas_obj, 'name': 'CBLM'}
     juliech_atlas_dict = {'obj': JuliechAtlasObj, 'name':'Juliech'}
     BNA_atlas_dict = {'obj': BNAtlasObj, 'name':'BN'}
 
-    atlas_dict = [HO_atlas_dict, juliech_atlas_dict]
+    atlas_dict = [HO_atlas_dict, cerebellum_atlas_dict, juliech_atlas_dict]
 
     # ------------------------------------------------------------------------
 
@@ -743,33 +765,31 @@ if __name__ == "__main__":
 
     filename = 'csv_output/finalLinks_all_columns.csv'
     df = q.addNameCSV(csvPath, filename, columns_index_include, READ_HEMIS_FROM_CSV)
-    # df = q.addNameCSV(csvPath, filename)
 
-    # import pdb;pdb.set_trace()
-    # Remov the blank links
+    # Remove the blank links
 
-    in_file = 'csv_output/finalLinks_all_columns.csv'
-    out_file = 'csv_output/finalLinks_blanks_dropped_all_columns.csv'
-    dropped_file = 'csv_output/dropped_all_columns.csv'
+    if REMOVE_BLANKS:
+        in_file = 'csv_output/finalLinks_all_columns.csv'
+        out_file = 'csv_output/finalLinks_blanks_dropped_all_columns.csv'
+        dropped_file = 'csv_output/dropped_all_columns.csv'
 
+        column_index = [44,54]
+        df_final, df_dropped = addAtlasNamestoCSV.remove_blank_links(column_index,in_file,out_file,dropped_file)
+        in_file = 'csv_output/finalLinks_blanks_dropped_all_columns.csv'
 
-    # column_index = [45,55]
-    column_index = [44,54]
-    df_final, df_dropped = addAtlasNamestoCSV.remove_blank_links(column_index,in_file,out_file,dropped_file)
-    in_file = 'csv_output/finalLinks_blanks_dropped_all_columns.csv'
+    else:
+        in_file = 'csv_output/finalLinks_all_columns.csv'
+
 
     # Remove Duplicates
 
     # Remove Duplicates: For each paper ID independently, remove the link that has same hemisphere HO region
     # as source and target and that has same connectivity value
 
-    # import pdb;pdb.set_trace()
 
     if REMOVE_DUPLICATES:
         out_file = 'csv_output/finalLinks_duplicates_removed_all_columns.csv'
-        # column_index = [4,13,17,23,27,33]
 
-        # column_index = [40,41,45,51,55,61]
         column_index = [39,40,44,50,54,60]
 
         df_extracted = addAtlasNamestoCSV.remove_duplicate_rows(column_index,in_file,out_file)
@@ -783,7 +803,15 @@ if __name__ == "__main__":
     # Include synthetic link
     if SYNTHETIC_LINKS:
         print('Creating synthetic links')
-        links_columns_all_details =  list(np.arange(40,60))
+
+        """
+        Every new atlas added will increase the 2nd term by 2. By default (i.e.)
+        only with BNA, the range will be (40,56). With HO and Juliech added, the
+        range becomes (40,60). Now with added cerebellum the range should be
+        (40,62)
+        """
+        links_columns_all_details =  list(np.arange(40,62))
+
         out_file = 'csv_output/finalLinks_blanks_dropped_synthetic_added_all_columns_temp.csv'
         df = addAtlasNamestoCSV.add_synthetic_links(in_file,links_columns_all_details,out_file)
         in_file = 'csv_output/finalLinks_blanks_dropped_synthetic_added_all_columns.csv' # For next Step
@@ -805,28 +833,11 @@ if __name__ == "__main__":
 
 
 
-    # import pdb;pdb.set_trace()
-
     # Consistent and conflicting links
 
     # Match the rows having same hemisphere and same HO region
 
-
-    # columns_match_index = [13, 17, 23, 27]
-
-    # connectivity_column_index = [33]
-    # s_no_column_index = [1]
-    # paper_id_column_index = [3]
-
-    # columns match index of the form []
-    # columns_match_index = [41,45,51,55]
     columns_match_index = [40,44,50,54]
-
-    # columns_match_index = [45,55]
-
-    # connectivity_column_index = [61]
-    # s_no_column_index = [39]
-    # paper_id_column_index = [40]
 
     connectivity_column_index = [60]
     s_no_column_index = [38]
