@@ -25,25 +25,31 @@ class queryAtlas:
                'cerebellumAtlas/Cerebellum-MNIflirt-maxprob-thr25-1mm.nii.gz']
     >>> atlasLabelsPaths1 = ['hoAtlas/HarvardOxford-Cortical.xml','hoAtlas/HarvardOxford-Subcortical.xml',\
                     'cerebellumAtlas/Cerebellum_MNIflirt.xml']
-    >>> q1 = queryAtlas(atlasPaths1,atlasLabelsPaths1)
+    >>> q1 = queryAtlas(atlasPaths1, atlasLabelsPaths1)
     >>> q1.getAtlasRegions([-6,62,-2])
     (1, 'Frontal Pole', 0)
 
     Also, this function supports the use of 4D probability map of the atlas to find the nearby
     maximim probability region in the vicinity of 3 voxel cube if the region at a particular voxel is not
     present in the atlas.
-    Set prob = True  and provide a 4D nii.gz file path as atlas_path
+    Just provide a 4D nii.gz file path as atlas_path
+
+    To include the HO_subcortical atlas's WM or Cerebral cortex regions
+    in the region prediction set WM_HEMISPHERE_INFO=True while initializing the
+    class object:
+    >>> q1 = queryAtlas(atlasPaths1, atlasLabelsPaths1, True)
+
 
 
 
     '''
-    def __init__(self,atlasPaths,atlasLabelsPaths):
+    def __init__(self,atlasPaths,atlasLabelsPaths,WM_HEMISPHERE_INFO=False):
         self.atlasPaths = atlasPaths
         self.atlasLabelsPaths = atlasLabelsPaths
         self.itr = [0,1,-1,2,-2,3,-3] # represents the neighbourhood to search the queryVoxel
         self.atlas_list = []
         self.pixdim_list = []
-        self.WM_HEMISPHERE_INFO = False
+        self.WM_HEMISPHERE_INFO = WM_HEMISPHERE_INFO
 
         for index,atlasPath in enumerate(self.atlasPaths):
 
@@ -63,17 +69,17 @@ class queryAtlas:
             elif atlas_shape_len == 3:
                 self.prob = False
             else:
+                print('Exception: Atlas of unknown shape')
                 raise Exception('Exception: Atlas of unknown shape. Exiting!')
 
 
             print('Atlas read')
             if _atlas.header['pixdim'][1] == 2:
                 pixdim = 2
-    #             x,y,z = self.MNI2XYZ2mm(coordMni)
             elif _atlas.header['pixdim'][1] == 1:
                 pixdim = 1
-    #             x,y,z = self.MNI2XYZ1mm(coordMni)
             else:
+                print('Unknown Pixel Dimension', _atlas.header['pixdim'][1])
                 raise Exception('Unknown Pixel Dimension', _atlas.header['pixdim'][1] )
 
             self.pixdim_list.append(pixdim)
@@ -424,7 +430,8 @@ class queryAtlas:
                     itr_list = []
                     max_prob_list = []
                     if self.prob:
-                        vec_of_prob = self.atlas_list[atlas_index][x-xi,y-yi,z-zi,:]
+                        vec_of_prob = np.array(
+                        self.atlas_list[atlas_index][x-xi,y-yi,z-zi,:])
                         # It's an array of multiple probability values
                     else:
                         vec_of_prob = np.array(
@@ -437,6 +444,15 @@ class queryAtlas:
                     for counter in range(largest):
 
                         roiNumber = np.argmax(vec_of_prob) + 1 # [1 ... num_roi's]
+                        #TODO:
+                        """
+                        Take as input from the user the ROI_ignore list to ignore.
+                        As the roiNumber in ROI_ignore:
+                            continue #(keyword) This will make the program counter to jump to the next
+                                     # iteration of loop. Need to check if it works.
+
+
+                        """
                         max_prob =  vec_of_prob[roiNumber - 1]
                         if max_prob != 0: # the max roi lies inside the atlas
                             dist = abs(xi) +  abs(yi)  + abs(zi) # Distance metric
@@ -450,8 +466,8 @@ class queryAtlas:
                                     roi_list.append(roiNumber)
                                     max_prob_list.append(max_prob)
                                 else:
-                                    roi_list.append(max_prob)
-                                    max_prob_list.append(1)
+                                    roi_list.append(max_prob) # In fixed atlas, the probability/label value of the voxel denotes the region name
+                                    max_prob_list.append(1) # assign probability 1 to the fixed atlas region
 
                             vec_of_prob[roiNumber - 1] = 0 # to find second highest region
 
@@ -468,7 +484,7 @@ class queryAtlas:
 
 
 
-# In[70]:
+
 if __name__ == "__main__":
 
 
@@ -500,20 +516,20 @@ if __name__ == "__main__":
 
     if prob:
         atlas_paths = [
-        base_path + 'hoAtlas/HarvardOxford-sub-prob-1mm.nii.gz',
         base_path + 'hoAtlas/HarvardOxford-cort-prob-1mm.nii.gz',
+        base_path + 'hoAtlas/HarvardOxford-sub-prob-1mm.nii.gz',
         base_path + 'cerebellumAtlas/Cerebellum-MNIflirt-prob-1mm.nii.gz'
         ]
     else:
         atlas_paths = [
-        base_path + 'hoAtlas/HarvardOxford-sub-maxprob-thr25-1mm.nii.gz',
         base_path + 'hoAtlas/HarvardOxford-cort-maxprob-thr25-1mm.nii.gz',
+        base_path + 'hoAtlas/HarvardOxford-sub-maxprob-thr25-1mm.nii.gz',
         base_path + 'cerebellumAtlas/Cerebellum-MNIflirt-maxprob-thr25-1mm.nii.gz'
         ]
 
     atlas_labels_paths = [
-    base_path + 'hoAtlas/HarvardOxford-Subcortical.xml',
     base_path + 'hoAtlas/HarvardOxford-Cortical.xml',
+    base_path + 'hoAtlas/HarvardOxford-Subcortical.xml',
     base_path + 'cerebellumAtlas/Cerebellum_MNIflirt.xml'
     ]
 
