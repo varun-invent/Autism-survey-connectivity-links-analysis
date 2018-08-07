@@ -432,7 +432,13 @@ class queryAtlas:
                     if self.prob:
                         vec_of_prob = np.array(
                         self.atlas_list[atlas_index][x-xi,y-yi,z-zi,:])
-                        # It's an array of multiple probability values
+                        """
+                        It's an array of multiple probability values. A new
+                        array was created using np.array() as setting the largest val
+                        in vec_of_prob to 0 was not allowing getting the name
+                        of the same coordinates multiple times using the same
+                        class object and was giving None second time
+                        onwards. """
                     else:
                         vec_of_prob = np.array(
                         [self.atlas_list[atlas_index][x-xi,y-yi,z-zi]])
