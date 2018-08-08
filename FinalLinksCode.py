@@ -669,23 +669,12 @@ if __name__ == "__main__":
     CONSISTENT_INCONSISTENT_LINKS = False
     SYNTHETIC_LINKS = True
     ORDER_LINK_NODES = False
+
     READ_HEMIS_FROM_CSV = True
 
     prob = True
 
     base_path = '/home/varun/Projects/fmri/Autism-survey-connectivity-links-analysis/'
-
-
-
-
-
-
-    atlas_path = base_path + 'brainnetomeAtlas/BNA-maxprob-thr25-1mm.nii.gz'
-    # atlas_path = 'brainnetomeAtlas/BNA-prob-2mm.nii.gz'
-    atlasRegionsDescrpPath = \
-    base_path + 'brainnetomeAtlas/BNA_subregions_machineReadable.xlsx'
-
-    BNAtlasObj = bu.queryBrainnetomeROI(atlas_path, atlasRegionsDescrpPath)
 
 
     if prob:
@@ -700,6 +689,8 @@ if __name__ == "__main__":
         cerebellum_path = [
         base_path + 'cerebellumAtlas/Cerebellum-MNIflirt-prob-1mm.nii.gz'
         ]
+        BN_atlas_path = 'brainnetomeAtlas/BNA-prob-2mm.nii.gz'
+
 
     else:
         atlas_paths = [
@@ -714,6 +705,8 @@ if __name__ == "__main__":
         base_path + 'cerebellumAtlas/Cerebellum-MNIflirt-maxprob-thr25-1mm.nii.gz'
         ]
 
+        BN_atlas_path = base_path + 'brainnetomeAtlas/BNA-maxprob-thr25-1mm.nii.gz'
+
     atlas_labels_paths = [
     base_path + 'hoAtlas/HarvardOxford-Cortical.xml',
     base_path + 'hoAtlas/HarvardOxford-Subcortical.xml'
@@ -726,7 +719,10 @@ if __name__ == "__main__":
     base_path + 'cerebellumAtlas/Cerebellum_MNIflirt.xml'
     ]
 
+    BN_atlasRegionsDescrpPath = \
+    base_path + 'brainnetomeAtlas/BNA_subregions_machineReadable.xlsx'
 
+    BNAtlasObj = bu.queryBrainnetomeROI(BN_atlas_path, BN_atlasRegionsDescrpPath)
 
     HOAtlasObj = au.queryAtlas(atlas_paths,atlas_labels_paths)
 
@@ -734,9 +730,19 @@ if __name__ == "__main__":
 
     cerebellum_atlas_obj = au.queryAtlas(cerebellum_path,cerebellum_labels_path)
 
-    # atlasPath3 = ['Schaefer_4d_Atlas_7_Networks.nii.gz']
-    # atlasLabelsPath3 = ['schaeferAtlas/Schaefer_4d_Atlas_7_Networks_1mm.xml']
-    # SchaeferAtlasObj = au.queryAtlas(atlasPath3, atlasLabelsPath3)
+    aal_atlas_path = [base_path +
+    'aalAtlas/AAL.nii.gz']
+    aal_atlas_labels_path = [base_path +
+    'aalAtlas/AAL.xml']
+
+    aal_atlas_obj = au.queryAtlas(aal_atlas_path,aal_atlas_labels_path, atlas_xml_zero_start_index = False )
+
+    Schaefer_atlasPath = [
+    base_path + 'Schaefer_4d_Atlas_7_Networks.nii.gz']
+    Schaefer_atlasLabelsPath = [
+    base_path + 'schaeferAtlas/Schaefer_4d_Atlas_7_Networks_1mm.xml']
+
+    SchaeferAtlasObj = au.queryAtlas(Schaefer_atlasPath, Schaefer_atlasLabelsPath)
 
 
     csvPath = 'csv_input/als.csv'
@@ -748,12 +754,14 @@ if __name__ == "__main__":
     cerebellum_atlas_dict = {'obj': cerebellum_atlas_obj, 'name': 'CBLM'}
     juliech_atlas_dict = {'obj': JuliechAtlasObj, 'name':'Juliech'}
     BNA_atlas_dict = {'obj': BNAtlasObj, 'name':'BN'}
-
-    atlas_dict = [HO_atlas_dict, cerebellum_atlas_dict, juliech_atlas_dict]
+    aal_atlas_dict = {'obj': aal_atlas_obj, 'name':'AAL'}
+    schaefer_atlas_dict = {'obj': SchaeferAtlasObj, 'name':'Schaefer'}
+    atlas_dict_list = [HO_atlas_dict, cerebellum_atlas_dict, aal_atlas_dict, juliech_atlas_dict,schaefer_atlas_dict]
+    # atlas_dict_list = [HO_atlas_dict, juliech_atlas_dict]
 
     # ------------------------------------------------------------------------
 
-    q = addAtlasNamestoCSV(BNA_atlas_dict, atlas_dict)
+    q = addAtlasNamestoCSV(BNA_atlas_dict, atlas_dict_list)
 
 
     # columns_index_include = [0,1,28,29,30,31]
@@ -805,16 +813,18 @@ if __name__ == "__main__":
         print('Creating synthetic links')
 
         """
-        Every new atlas added will increase the 2nd term by 2. By default (i.e.)
+        Every new atlas added will increase the end_range (2nd term of np.range) by 2. By default (i.e.)
         only with BNA, the range will be (40,56). With HO and Juliech added, the
         range becomes (40,60). Now with added cerebellum the range should be
         (40,62)
         """
-        links_columns_all_details =  list(np.arange(40,62))
+        range_end = 56 + 2 * len(atlas_dict_list)
 
-        out_file = 'csv_output/finalLinks_blanks_dropped_synthetic_added_all_columns_temp.csv'
+        links_columns_all_details =  list(np.arange(40, range_end))
+
+        out_file = 'csv_output/finalLinks_synthetic_added_all_columns.csv'
         df = addAtlasNamestoCSV.add_synthetic_links(in_file,links_columns_all_details,out_file)
-        in_file = 'csv_output/finalLinks_blanks_dropped_synthetic_added_all_columns.csv' # For next Step
+        in_file = 'csv_output/finalLinks_synthetic_added_all_columns.csv' # For next Step
 
 
     # -----------------------------------
