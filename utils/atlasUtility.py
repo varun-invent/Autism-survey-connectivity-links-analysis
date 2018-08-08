@@ -43,13 +43,22 @@ class queryAtlas:
 
 
     '''
-    def __init__(self,atlasPaths,atlasLabelsPaths,WM_HEMISPHERE_INFO=False):
+    def __init__(self,atlasPaths,atlasLabelsPaths,WM_HEMISPHERE_INFO=False,atlas_xml_zero_start_index=True):
         self.atlasPaths = atlasPaths
         self.atlasLabelsPaths = atlasLabelsPaths
         self.itr = [0,1,-1,2,-2,3,-3] # represents the neighbourhood to search the queryVoxel
         self.atlas_list = []
         self.pixdim_list = []
         self.WM_HEMISPHERE_INFO = WM_HEMISPHERE_INFO
+
+        """ When the atlas labels xml file contains index starting from zero and
+        increasing then this flag is set to True otherwise False. This is
+        useful while creating the atlas region name dictionary in roiName().
+        In the atlas provided in FSL such as Harvard oxford and cerebellum atlas
+        , the index starts from zero and in incremented for each region whereas
+        in AAL atlas, the index is same as label in Atlas
+        """
+        self.ATLAS_XML_ZERO_START_INDEX = atlas_xml_zero_start_index
 
         for index,atlasPath in enumerate(self.atlasPaths):
 
@@ -135,8 +144,14 @@ class queryAtlas:
         root = ET.parse(atlasLabelsPath).getroot()
         elem = root.find('data')
         for regionRow in elem.getchildren():
-            # roiNumber  = int(regionRow.items()[2][1]) + 1 .items() gives the items in arbitary order so indexing changes
-            roiNumber = int(regionRow.get(key='index')) + 1
+            # roiNumber  = int(regionRow.items()[2][1]) + 1 .items()
+            # gives the items in arbitary order so indexing changes therefore use key= 'index'
+
+            if self.ATLAS_XML_ZERO_START_INDEX:
+                roiNumber = int(regionRow.get(key='index')) + 1
+            else:
+                roiNumber = int(regionRow.get(key='index'))
+
             roiName = regionRow.text
             atlasDict[roiNumber] = roiName
 
