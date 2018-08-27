@@ -423,6 +423,29 @@ class addAtlasNamestoCSV:
         df_extracted.to_csv(out_file, index=False)
         return df_extracted
 
+    # @staticmethod
+    # def remove_duplicate_links(columns_index, in_file, out_file):
+    #     """
+    #     This function iterates through each link A-B and deletes the occurance
+    #     of all the following links B-A.
+    #
+    #     Input: List Index of columns specifiying nodes A and B.
+    #     Output: FIle with the duplicate links removed.
+    #
+    #     Algorithm:
+    #     ---------
+    #
+    #     """
+    #     df = pd.read_csv(in_file)
+    #
+    #     node_a_index = columns_index[0:math.floor(len(column_index)/2)]
+    #     node_b_index = columns_index[math.floor(len(column_index)/2) + 1:]
+    #
+    #     for ix1, (Index, row1) in  tqdm(enumerate(df.iterrows())):
+    #         for ix2, (Index, row2) in enumerate(df[ix1+1:].iterrows()):
+    #             pass
+
+
     @staticmethod
     def remove_blank_links(columns_index, in_file, out_file, dropped_file):
         """
@@ -640,7 +663,30 @@ class addAtlasNamestoCSV:
 
         return df
 
+    @staticmethod
+    def check_number_of_consistencies(in_file1, in_file2):
+        """
+        This function finds, across all the links of a study (file1), how many
+        links are consistent. It refers to a list of consistent links (file2).
 
+        in_file1: File that contains all the links of the study in question
+        about consistency. It contains link name in each line.
+        in_file2: File that contains all the consistent links for all studies.
+        """
+
+        consistentency_count = 0
+
+        with open(in_file1,'r') as f1:
+            with open(in_file2,'r') as f2:
+                for line2 in f2:
+                    link2 = line2.strip()
+                    for line1 in f1:
+                        link1 = line1.strip()
+                        if link2 == link1:
+                            consistentency_count += 1
+                            break
+
+        return consistentency_count
 
 
 def show_columns(df):
