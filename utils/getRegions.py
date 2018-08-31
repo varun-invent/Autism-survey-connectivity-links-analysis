@@ -28,6 +28,14 @@ atlasLabelsPaths1 = [('/home/varun/Projects/fmri/Autism-survey-connectivity-'
                      ('/home/varun/Projects/fmri/Autism-survey-connectivity-'
                      'links-analysis/cerebellumAtlas/Cerebellum_MNIflirt.xml')]
 
+
+base_path = '/home/varun/Projects/fmri/Autism-survey-connectivity-links-analysis/'
+
+aal_atlas_path = [base_path +
+'aalAtlas/AAL.nii.gz']
+aal_atlas_labels_path = [base_path +
+'aalAtlas/AAL.xml']
+
 # -----------------------------------------------------------------------------
 
 # Parser to parse commandline arguments
@@ -35,7 +43,7 @@ atlasLabelsPaths1 = [('/home/varun/Projects/fmri/Autism-survey-connectivity-'
 ap = argparse.ArgumentParser()
 
 ap.add_argument("-a", "--atlas", required=True,
-                help="b: BN Atlas, hoc: HO/Cerebellum Atlas")
+                help="b: BN Atlas, hoc: HO/Cerebellum Atlas, aal: AAL atlas")
 ap.add_argument("-mni", "--mni", nargs='+', required=True,
                 help="MNI Coordinates space seperated")
 
@@ -49,21 +57,29 @@ MNI = list(map(int, args["mni"]))
 
 # Temporary variables to be used as proxy for objects
 
-q = q1 = False
+q = q1 = aal_atlas_obj = False
 
 if atlas == 'b':
-    q = bu.queryBrainnetomeROI(atlas_path, atlasRegionsDescrpPath, True)
+    q = bu.queryBrainnetomeROI(atlas_path, atlasRegionsDescrpPath)
 elif atlas == 'hoc':
-    q1 = au.queryAtlas(atlasPaths1,atlasLabelsPaths1,False)
+    q1 = au.queryAtlas(atlasPaths1,atlasLabelsPaths1)
+elif atlas == 'aal':
+    aal_atlas_obj = au.queryAtlas(aal_atlas_path,aal_atlas_labels_path, atlas_xml_zero_start_index = False )
+
 else:
     raise Exception('Incorrect Atlas Option')
 
 # Assigning the proxy to the object variable
 
+print('Atlas Flag: ',atlas)
+
 if q:
     obj = q
 elif q1:
     obj = q1
+elif aal_atlas_obj:
+    obj = aal_atlas_obj
+
 
 # Get the region from the above defined atlas
 print(obj.getAtlasRegions(MNI))
