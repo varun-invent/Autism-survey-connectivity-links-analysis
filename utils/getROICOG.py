@@ -51,7 +51,16 @@ class getROICOG:
 
     def getCOG(self, roi, hemisphere=None):
         """
-        Gives the centre of gravity (MNI coordinates) of an ROI
+        Gives the Representative coordinate of the region
+
+        Representative coordinate is the peak coordinate closest to the
+        centre of gravity of an ROI. If this results in multiple representative
+        coordinate, the coordinate closest to the mid-line is taken.
+
+        Note: Reason for selecting coordinate cosest to midline is just a
+        huristic to resolve the multiple coordinates. It can be replaced by any
+        other heuristic.   
+
         Input: Atlas File 1mm
                ROI number
                hemisphere = L or R (optional)
