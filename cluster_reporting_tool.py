@@ -13,7 +13,7 @@ from scipy.ndimage.measurements import label as lb
 from scipy.ndimage.measurements import center_of_mass as com
 import nibabel as nib
 # from utils import getROICOG
-from utils.atlasUtility import queryAtlas
+from utils import atlasUtility as au
 import argparse
 
 class cluster_reporting_tool:
@@ -33,8 +33,10 @@ class cluster_reporting_tool:
     """
     def __init__(self, contrast, atlas, threshold, volume = 0):
         # Read Brain file:
-        self.brain = nib.load(contrast).get_data()
+        self.brain_img = nib.load(contrast)
+        self.brain = self.brain_img.get_data()
         self.brain[np.isnan(self.brain)] = 0
+
         # Read Atlas file
         self.atlas = nib.load(atlas).get_data()
 
@@ -43,8 +45,23 @@ class cluster_reporting_tool:
         self.volume = volume
 
     def getNearestVoxel(self, roi_mask, COG):
-        # roi_mask = np.zeros(atlas.shape)
-        # roi_mask[np.where(atlas == roi)] = 1
+        """
+        Input:
+        -----
+        roi_mask - This is the brain 3D tensor in which the voxels
+        belonging to some predefined region has non zero value and rest of the
+        voxels has zero value.
+
+        COG: It is a list or tuple of 3 cartesian coordinates (x, y, z)
+        representing the COG.
+
+        Output:
+        ------
+        The function returns the cartesian coordinates of the coordinate in the
+        non zero region of roi_mask that is closest to the COG
+
+        """
+
         roiCoord = np.where(roi_mask != 0)
 
         peak_list = []
@@ -90,6 +107,28 @@ class cluster_reporting_tool:
 
         return res[0]
 
+    def _pixDim(self):
+        """
+        Internal Function to be used within this script
+        Returns the pixel dimension
+        """
+        if self.brain_img.header['pixdim'][1] == 2:
+            pixdim = 2
+        elif self.brain_img.header['pixdim'][1] == 1:
+            pixdim = 1
+        else:
+            raise Exception('Unknown Pixel Dimension',
+                            self.brain_img.header['pixdim'][1])
+
+        return pixdim
+
+    def _XYZ2MNI(self, CM):
+        if self._pixDim() == 1:
+            MNI = au.queryAtlas.XYZ2MNI1mm(list(CM))
+        elif self._pixDim() == 2:
+            MNI = au.queryAtlas.XYZ2MNI2mm(list(CM))
+        # print("Center of Gravity:", MNI)
+        return MNI
 
     def report(self, volume = None, threshold = None):
         # To take care if user has given a 4D contrast
@@ -204,7 +243,16 @@ class cluster_reporting_tool:
                 cog_unweighted = com(roi_mask_for_unweighted_cog)
                 cog_weighted = com(roi_mask_for_weighted_cog)
 
+                # convert the coordinates to int (math.floor)
 
+                cog_unweighted = tuple(map(int, cog_unweighted))
+                cog_weighted = tuple(map(int, cog_weighted))
+
+                """
+                If the COG lies outside the overlapping coordinates then find
+                the coordinate that lies on the overlapping region and is
+                closest to the COG.
+                """
 
                 if not roi_mask_for_unweighted_cog[cog_unweighted]:
                     cog_unweighted = \
@@ -216,14 +264,30 @@ class cluster_reporting_tool:
                               self.getNearestVoxel(roi_mask_for_weighted_cog,
                                                    cog_weighted)
 
-               print('COM Weighted', cog_weighted)
-               print('COM Unweighted', cog_unweighted)
+               # print('COM Unweighted', cog_unweighted)
+                print('COM Weighted', cog_weighted)
+
+                # Convert to MNI
+
+                MNI_cog_unweighted = self._XYZ2MNI(cog_unweighted)
+                MNI_cog_weighted = self._XYZ2MNI(cog_weighted)
+
+                base_path = '/home/varun/Projects/fmri/' + \
+                'Autism-survey-connectivity-links-analysis/'
+
+                aal_atlas_path = [base_path + 'aalAtlas/AAL.nii.gz']
+                aal_atlas_labels_path = [base_path + 'aalAtlas/AAL.xml']
+
+                aal_atlas_obj = au.queryAtlas(aal_atlas_path,aal_atlas_labels_path, atlas_xml_zero_start_index = False )
 
 
-               
+
+                print('Region name: ',aal_atlas_obj.getAtlasRegions(MNI_cog_weighted))
 
 
-                # MNI = self._XYZ2MNI(CM)
+
+
+
 
                 pass
 
