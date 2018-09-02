@@ -53,13 +53,29 @@ class getROICOG:
         """
         Gives the Representative coordinate of the region
 
-        Representative coordinate is the peak coordinate closest to the
-        centre of gravity of an ROI. If this results in multiple representative
-        coordinate, the coordinate closest to the mid-line is taken.
+        For a 3D brain:
+        ---------------
+        Assumption: Region's voxels are denoted by a constant that
+        represents the label of that region. The representative coordinate is
+        the COG of that region.
+
+        For a 4D brain:
+        ---------------
+        Representative coordinate is the peak coordinate. If there are multiple
+        peak coordinates the representative coordinate is  the one that is
+        closest to the centre of gravity of the ROI.
+        If this also results in multiple representative coordinates, then the
+        coordinate closest to the mid-line is taken.
 
         Note: Reason for selecting coordinate cosest to midline is just a
         huristic to resolve the multiple coordinates. It can be replaced by any
-        other heuristic.   
+        other heuristic.
+
+        Disclaimer:
+        -----------
+        This procedure might result in a COG that lies outside the region.
+        getAALCOG has the script that using this script and add some code on
+        top to take care of this.  
 
         Input: Atlas File 1mm
                ROI number
@@ -68,7 +84,7 @@ class getROICOG:
         Usage:
         >>> atlas= '/home/varun/Projects/fmri/Autism-survey-connectivity-links-analysis/hoAtlas/HarvardOxford-sub-maxprob-thr0-1mm.nii.gz'
         >>> roi = 20
-        >>> print(getCOG(atlas,roi))
+        >>> print(getCOG(roi))
         [21.48304821150856, -3.779160186625191, -17.954898911353034]
         """
 
