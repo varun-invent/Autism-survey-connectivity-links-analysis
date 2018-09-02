@@ -53,13 +53,13 @@ class getROICOG:
         """
         Gives the Representative coordinate of the region
 
-        For a 3D brain:
+        For a 3D brain atlas:
         ---------------
         Assumption: Region's voxels are denoted by a constant that
         represents the label of that region. The representative coordinate is
         the COG of that region.
 
-        For a 4D brain:
+        For a 4D brain atlas:
         ---------------
         Representative coordinate is the peak coordinate. If there are multiple
         peak coordinates the representative coordinate is  the one that is
@@ -73,9 +73,9 @@ class getROICOG:
 
         Disclaimer:
         -----------
-        This procedure might result in a COG that lies outside the region.
+        For a 3d Brain atlas (like AAL), this procedure might result in a COG that lies outside the region.
         getAALCOG has the script that using this script and add some code on
-        top to take care of this.  
+        top to take care of this.
 
         Input: Atlas File 1mm
                ROI number
