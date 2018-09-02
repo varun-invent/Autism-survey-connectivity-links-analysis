@@ -42,7 +42,53 @@ class cluster_reporting_tool:
 
         self.volume = volume
 
+    def getNearestVoxel(self, roi_mask, COG):
+        # roi_mask = np.zeros(atlas.shape)
+        # roi_mask[np.where(atlas == roi)] = 1
+        roiCoord = np.where(roi_mask != 0)
 
+        peak_list = []
+        dist = float(np.inf)
+        for [x, y, z] in zip(roiCoord[0], roiCoord[1], roiCoord[2]):
+            peak = [x, y, z]
+            current_dist = abs(x - COG[0]) + abs(y - COG[1]) + abs(z - COG[2])
+            if current_dist < dist:
+                if len(peak_list) != 0:
+                    peak_list = []
+                peak_list.append(peak)
+                dist = current_dist
+            elif current_dist == dist:
+                peak_list.append(peak)
+                dist = current_dist
+
+        # The above 'For loop' might result in miltiple peak coordinates(peak list)
+        # having same distance from COG Check which of the peak list has least
+        # x coordinate i.e closest to midline (My heuristic) to select one peak
+
+        x = float(np.inf)
+        res = []
+        for coordinates in peak_list:
+            current_x = abs(coordinates[0])
+            if current_x < x:
+                res = []
+                res.append(coordinates)
+            elif current_x == x:
+                res.append(coordinates)
+            else:
+                pass
+
+        # # Find the MNI coordinates of the peak coordinates
+        # MNI = []
+        # for res_peak in res:
+        #     MNI.append(queryAtlas.XYZ2MNI2mm(res_peak))
+        #
+        # return MNI
+
+        if len(res) > 1:
+            raise Exception('Multiple candidates for Representative \
+            coordinates. Please report to the author of the tool about this!')
+
+        return res[0]
 
 
     def report(self, volume = None, threshold = None):
@@ -155,11 +201,28 @@ class cluster_reporting_tool:
                 roi_mask_for_weighted_cog = brain_zero
 
 
-                CM_unweighted = com(roi_mask_for_unweighted_cog)
-                CM_weighted = com(roi_mask_for_weighted_cog)
+                cog_unweighted = com(roi_mask_for_unweighted_cog)
+                cog_weighted = com(roi_mask_for_weighted_cog)
 
-                # print('COM Weighted', CM_weighted)
-                print('COM Unweighted', CM_unweighted)
+
+
+                if not roi_mask_for_unweighted_cog[cog_unweighted]:
+                    cog_unweighted = \
+                              self.getNearestVoxel(roi_mask_for_unweighted_cog,
+                                                   cog_unweighted)
+
+                if not roi_mask_for_weighted_cog[cog_weighted]:
+                    cog_weighted= \
+                              self.getNearestVoxel(roi_mask_for_weighted_cog,
+                                                   cog_weighted)
+
+               print('COM Weighted', cog_weighted)
+               print('COM Unweighted', cog_unweighted)
+
+
+               
+
+
                 # MNI = self._XYZ2MNI(CM)
 
                 pass
