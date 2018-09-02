@@ -78,7 +78,7 @@ class cluster_reporting_tool:
 
             # Find the atlas labels/regions that the cluster spans
             atlas_regions_labels = np.unique(self.atlas[cluster_indices])
-            print(atlas_regions_labels)
+            # print(atlas_regions_labels)
 
             # iterate over all the labes/regions
             for label in atlas_regions_labels:
@@ -150,13 +150,21 @@ class cluster_reporting_tool:
                 Ref: https://stackoverflow.com/questions/32322281/
                 numpy-matrix-binarization-using-only-one-expression
                 """
-                roi_mask = np.where(brain_zero > 0, 1, 0)
 
-                # CM = ndimage.measurements.com(roi_mask)
+                roi_mask_for_unweighted_cog = np.where(brain_zero != 0, 1, 0)
+                roi_mask_for_weighted_cog = brain_zero
+
+
+                CM_unweighted = com(roi_mask_for_unweighted_cog)
+                CM_weighted = com(roi_mask_for_weighted_cog)
+
+                # print('COM Weighted', CM_weighted)
+                print('COM Unweighted', CM_unweighted)
                 # MNI = self._XYZ2MNI(CM)
 
                 pass
 
+                brain_zero.fill(0)
 
                     # b. Also report the MNI coordinate
                     # c. Report the name of the region
