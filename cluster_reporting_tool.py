@@ -31,14 +31,15 @@ class cluster_reporting_tool:
                                                                        cluster.
 
     """
-    def __init__(self, contrast, atlas, threshold, volume = 0):
+    def __init__(self, contrast, atlas_dict, threshold, volume = 0):
         # Read Brain file:
         self.brain_img = nib.load(contrast)
         self.brain = self.brain_img.get_data()
         self.brain[np.isnan(self.brain)] = 0
 
+        self.atlas_dict = atlas_dict
         # Read Atlas file
-        self.atlas = nib.load(atlas).get_data()
+        self.atlas = nib.load(atlas_dict['atlas_path'][0]).get_data()
 
         self.thresh = threshold
 
@@ -272,13 +273,19 @@ class cluster_reporting_tool:
                 MNI_cog_unweighted = self._XYZ2MNI(cog_unweighted)
                 MNI_cog_weighted = self._XYZ2MNI(cog_weighted)
 
-                base_path = '/home/varun/Projects/fmri/' + \
-                'Autism-survey-connectivity-links-analysis/'
+                # base_path = '/home/varun/Projects/fmri/' + \
+                # 'Autism-survey-connectivity-links-analysis/'
+                #
+                # aal_atlas_path = [base_path + 'aalAtlas/AAL.nii.gz']
+                # aal_atlas_labels_path = [base_path + 'aalAtlas/AAL.xml']
 
-                aal_atlas_path = [base_path + 'aalAtlas/AAL.nii.gz']
-                aal_atlas_labels_path = [base_path + 'aalAtlas/AAL.xml']
+                atlas_path = self.atlas_dict['atlas_path']
+                atlas_labels_path = self.atlas_dict['atlas_labels_path']
+                atlas_xml_zero_start_index = \
+                                   self.atlas_dict['atlas_xml_zero_start_index']
 
-                aal_atlas_obj = au.queryAtlas(aal_atlas_path,aal_atlas_labels_path, atlas_xml_zero_start_index = False )
+                aal_atlas_obj = au.queryAtlas(atlas_path, atlas_labels_path,
+                          atlas_xml_zero_start_index=atlas_xml_zero_start_index)
 
 
 
@@ -316,6 +323,11 @@ if __name__ == "__main__":
 
     args = vars(ap.parse_args())
 
+
+
+    base_path = '/home/varun/Projects/fmri/' + \
+    'Autism-survey-connectivity-links-analysis/'
+
     if args["contrast"] != None:
         contrast = args["contrast"]
     else:
@@ -327,8 +339,9 @@ if __name__ == "__main__":
     if args["atlas"] != None:
         atlas = args["atlas"]
     else:
-        atlas = '/home/varun/Projects/fmri/' + \
-        'Autism-survey-connectivity-links-analysis/aalAtlas/AAL.nii.gz'
+        # atlas = '/home/varun/Projects/fmri/' + \
+        # 'Autism-survey-connectivity-links-analysis/aalAtlas/AAL.nii.gz'
+        atlas = 'AAL'
     print("Using atlas %s" % atlas)
 
     if args["thresh"] != None:
@@ -346,8 +359,19 @@ if __name__ == "__main__":
     print("Using Volume_index %s" % str(volume))
 
 
+    if atlas == 'AAL':
+        atlas_path = [base_path + 'aalAtlas/AAL.nii.gz']
+        atlas_labels_path = [base_path + 'aalAtlas/AAL.xml']
+        atlas_xml_zero_start_index  =  False
 
 
 
-    crl_obj = cluster_reporting_tool(contrast, atlas, threshold, volume)
+    atlas_dict = {
+    'atlas_path': atlas_path,
+    'atlas_labels_path': atlas_labels_path,
+    'atlas_xml_zero_start_index': atlas_xml_zero_start_index
+    }
+
+
+    crl_obj = cluster_reporting_tool(contrast, atlas_dict, threshold, volume)
     crl_obj.report()
