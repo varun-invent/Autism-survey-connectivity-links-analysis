@@ -265,19 +265,16 @@ class cluster_reporting_tool:
                               self.getNearestVoxel(roi_mask_for_weighted_cog,
                                                    cog_weighted)
 
-               # print('COM Unweighted', cog_unweighted)
+                print('COM Unweighted', cog_unweighted)
                 print('COM Weighted', cog_weighted)
 
-                # Convert to MNI
+                # b. Convert to MNI
 
                 MNI_cog_unweighted = self._XYZ2MNI(cog_unweighted)
                 MNI_cog_weighted = self._XYZ2MNI(cog_weighted)
 
-                # base_path = '/home/varun/Projects/fmri/' + \
-                # 'Autism-survey-connectivity-links-analysis/'
-                #
-                # aal_atlas_path = [base_path + 'aalAtlas/AAL.nii.gz']
-                # aal_atlas_labels_path = [base_path + 'aalAtlas/AAL.xml']
+
+                # c. Report the name of the region
 
                 atlas_path = self.atlas_dict['atlas_path']
                 atlas_labels_path = self.atlas_dict['atlas_labels_path']
@@ -289,10 +286,52 @@ class cluster_reporting_tool:
 
 
 
-                print('Region name: ',aal_atlas_obj.getAtlasRegions(MNI_cog_weighted))
+                print('Region name: ',\
+                aal_atlas_obj.getAtlasRegions(MNI_cog_weighted))
+
+                print('Region name: ',\
+                aal_atlas_obj.getAtlasRegions(MNI_cog_unweighted))
 
 
+                """
+                TODO:
+                Store each of the coordinates in cog_list, names in
+                name_list, values in value_list, number of voxels etc.
+                Find the max of the value_list and corresponding name in
+                name_list and also calculate other details and store them in
+                lists.
 
+                Create a distionary with all the above created lists.
+
+                Create a empty data frame and add the above created dictionary
+                in it.
+
+                ATLAS NAME
+                SIZE (MM)
+
+                In one For loop create the details about cluster1 and store them
+                in lists as said above. As said above, add these lists in a
+                dictionary.
+                Then this dictionary is added to a dataframe.
+
+                The table should look like the following:
+
+                ROI1 Cluster1 MaxValue COG Region Total_#_voxels %_voxels
+                              MaxValue COG Region #_voxels %_voxles_overlap
+                              Value2   COG Region #_voxels %_voxles_overlap
+                              Value3   COG Region #_voxels %_voxles_overlap
+                              .        .
+                              .        .
+                              .        .
+                     Cluster2 MaxValue COG Region Total_#_voxels
+                                   MaxValue COG Region #_voxels %_voxles_overlap
+                                   Value2   COG Region #_voxels %_voxles_overlap
+                                   Value3   COG Region #_voxels %_voxles_overlap
+                                   .        .
+                                   .        .
+                                   .        .
+
+                """
 
 
 
@@ -300,11 +339,9 @@ class cluster_reporting_tool:
 
                 brain_zero.fill(0)
 
-                    # b. Also report the MNI coordinate
-                    # c. Report the name of the region
                     # d. Number and Percentage of voxels overlapping the region
                     # e. Peak coordinate of the cluster
-                    # f. COG weighted by peak  which is the representative_coordinate alreaded computed
+
 
 
 if __name__ == "__main__":
@@ -363,8 +400,6 @@ if __name__ == "__main__":
         atlas_path = [base_path + 'aalAtlas/AAL.nii.gz']
         atlas_labels_path = [base_path + 'aalAtlas/AAL.xml']
         atlas_xml_zero_start_index  =  False
-
-
 
     atlas_dict = {
     'atlas_path': atlas_path,
