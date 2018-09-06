@@ -196,6 +196,14 @@ class cluster_reporting_tool:
                 MNI_cog_list = []
                 cog_region_name_list = []
 
+                cog_unweighted_value_list = []
+                cog_weighted_value_list = []
+                cog_weighted_value_list = []
+                MNI_cog_unweighted_list = []
+                MNI_cog_weighted_list = []
+                cog_region_name_weighted_list = []
+                cog_region_name_unweighted_list   = []
+
 
                 # Find all the coordinates of the labels
 
@@ -342,9 +350,9 @@ class cluster_reporting_tool:
                 cog_region_name_unweighted = \
                               aal_atlas_obj.getAtlasRegions(MNI_cog_unweighted)
 
-                print('Region name weighted COG: ',region_name_weighted)
+                print('Region name weighted COG: ',cog_region_name_weighted)
 
-                print('Region name unweighter COG: ',region_name_unweighted)
+                print('Region name unweighter COG: ',cog_region_name_unweighted)
 
                 # List created to be added to dataframe
                 cog_region_name_weighted_list.append(cog_region_name_weighted)
@@ -373,7 +381,7 @@ class cluster_reporting_tool:
 
                 df = pd.DataFrame(df_dict)
 
-                df_report.append(df)
+                df_report = df_report.append(df)
 
                 # Empty the lists to be filled again
                 cog_value_list = []
@@ -385,6 +393,11 @@ class cluster_reporting_tool:
 
                 """
                 TODO:
+                The order of the columns is not maintained
+                Test again about the validity of results. The number of voxels
+                is very low. Check it!
+                 
+                DONE:
                 Store each of the coordinates in cog_list, names in
                 name_list, values in value_list, number of voxels etc.
                 Find the max of the value_list and corresponding name in
