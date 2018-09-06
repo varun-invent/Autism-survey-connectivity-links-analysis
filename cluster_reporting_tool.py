@@ -15,6 +15,8 @@ import nibabel as nib
 # from utils import getROICOG
 from utils import atlasUtility as au
 import argparse
+import pandas as pd
+from collections import OrderedDict
 
 class cluster_reporting_tool:
     """
@@ -144,6 +146,9 @@ class cluster_reporting_tool:
         if threshold != None:
             self.thresh = threshold
 
+        # Total number of brain voxels
+        num_brain_voxels = len(np.where(brain != 0)[0])
+
 
         """
         Brain_zero is used later to calculate the center of gravity of the
@@ -158,9 +163,25 @@ class cluster_reporting_tool:
         # Find clusters
         clusters, num_clusters = lb(brain)
 
+        df_report = pd.DataFrame()
+
+        # List to store cluster size information
+        full_cluster_voxels_percentage_list = []
+
         for cluster_number in range(1,num_clusters + 1):
             # Coordinates that are present in cluster given by cluster_number
             cluster_indices = np.where(clusters == cluster_number)
+
+            # Number of voxels belonging to the cluster -> cluster_number
+            num_cluster_voxels = len(cluster_indices[0])
+
+            # Percentage of total brain voxels in a cluster
+            full_cluster_voxels_percentage = \
+                                    num_cluster_voxels * 100 / num_brain_voxels
+
+            # To create a list to be added to dataframe
+            full_cluster_voxels_percentage_list.append(
+                                                full_cluster_voxels_percentage)
 
             # Find the atlas labels/regions that the cluster spans
             atlas_regions_labels = np.unique(self.atlas[cluster_indices])
@@ -168,7 +189,15 @@ class cluster_reporting_tool:
 
             # iterate over all the labes/regions
             for label in atlas_regions_labels:
-                # Find all the coordinates of these labels
+                # Lists to be used for dataFrame creation
+                cog_value_list = []
+                number_overlapping_cluster_voxels_list = []
+                overlapping_cluster_voxels_percentage_list = []
+                MNI_cog_list = []
+                cog_region_name_list = []
+
+
+                # Find all the coordinates of the labels
 
                 # Skipping the Label 0
                 if label == 0:
@@ -180,25 +209,24 @@ class cluster_reporting_tool:
                 under consideration """
 
                 # Changing the form of cluster indices to (x,y,z) tuple
-                # cluster_indices_tuple_list = []
+
                 cluster_indices_zip = zip(cluster_indices[0], cluster_indices[1]
                                       , cluster_indices[2])
-                # for coordinates in cluster_indices_zip:
-                #     cluster_indices_tuple_list.append(coordinates)
 
                 cluster_indices_tuple_list = list(cluster_indices_zip)
 
                 # Changing the form of atlas indices to (x,y,z) tuple
-                # atlas_label_indices_tuple_list = []
 
                 atlas_label_indices_zip = \
                 zip(atlas_label_indices[0], atlas_label_indices[1],
                                             atlas_label_indices[2])
 
-                # for coordinates in atlas_label_indices_zip:
-                #     atlas_label_indices_tuple_list.append(coordinates)
+
 
                 atlas_label_indices_tuple_list = list(atlas_label_indices_zip)
+
+                # Number of voxels belonging to the atlas region
+                num_atlas_region_voxels = len(atlas_label_indices_tuple_list)
 
                 # 1. Find intersecion of the above two lists
                 overlapping_coordinates = \
@@ -216,13 +244,26 @@ class cluster_reporting_tool:
 
                 """
                 overlapping_indices_zip =  zip(*overlapping_coordinates)
-                # overlapping_indices_tuple_list = []
-                # for ind_list in overlapping_indices_zip:
-                #     overlapping_indices_tuple_list.append(ind_list)
 
                 overlapping_indices_tuple_list = list(overlapping_indices_zip)
 
+                # Number of voxels in the overlap of cluster and atlas region
+                number_overlapping_cluster_voxels = \
+                                            len(overlapping_indices_tuple_list)
 
+                # Creating list to be added to dataframe
+                number_overlapping_cluster_voxels_list.append(
+                                              number_overlapping_cluster_voxels)
+
+                #Percentage of voxels in the overlap of cluster and atlas region
+                overlapping_cluster_voxels_percentage = \
+                number_overlapping_cluster_voxels*100 / num_atlas_region_voxels
+
+                # Creating list to be added to dataframe
+                overlapping_cluster_voxels_percentage_list.append(
+                                          overlapping_cluster_voxels_percentage)
+
+                # Assigning the overlap to the empty brain to find COG later
                 brain_zero[overlapping_indices_tuple_list] = \
                                            brain[overlapping_indices_tuple_list]
 
@@ -245,7 +286,6 @@ class cluster_reporting_tool:
                 cog_weighted = com(roi_mask_for_weighted_cog)
 
                 # convert the coordinates to int (math.floor)
-
                 cog_unweighted = tuple(map(int, cog_unweighted))
                 cog_weighted = tuple(map(int, cog_weighted))
 
@@ -268,10 +308,21 @@ class cluster_reporting_tool:
                 print('COM Unweighted', cog_unweighted)
                 print('COM Weighted', cog_weighted)
 
-                # b. Convert to MNI
+                # Finding the values at the cluster representative coordinates
+                cog_unweighted_value = brain[cog_unweighted]
+                cog_weighted_value = brain[cog_weighted]
 
+                # Lists to be added to dataframe
+                cog_unweighted_value_list.append(cog_unweighted_value)
+                cog_weighted_value_list.append(cog_weighted_value)
+
+                # b. Convert the cartesian coordinates to MNI
                 MNI_cog_unweighted = self._XYZ2MNI(cog_unweighted)
                 MNI_cog_weighted = self._XYZ2MNI(cog_weighted)
+
+                # Lists to be added to dataframe
+                MNI_cog_unweighted_list.append(MNI_cog_unweighted)
+                MNI_cog_weighted_list.append(MNI_cog_weighted)
 
 
                 # c. Report the name of the region
@@ -285,12 +336,51 @@ class cluster_reporting_tool:
                           atlas_xml_zero_start_index=atlas_xml_zero_start_index)
 
 
+                # Names of the regions of COG
+                cog_region_name_weighted = \
+                                aal_atlas_obj.getAtlasRegions(MNI_cog_weighted)
+                cog_region_name_unweighted = \
+                              aal_atlas_obj.getAtlasRegions(MNI_cog_unweighted)
 
-                print('Region name: ',\
-                aal_atlas_obj.getAtlasRegions(MNI_cog_weighted))
+                print('Region name weighted COG: ',region_name_weighted)
 
-                print('Region name: ',\
-                aal_atlas_obj.getAtlasRegions(MNI_cog_unweighted))
+                print('Region name unweighter COG: ',region_name_unweighted)
+
+                # List created to be added to dataframe
+                cog_region_name_weighted_list.append(cog_region_name_weighted)
+                cog_region_name_unweighted_list.append(cog_region_name_unweighted)
+
+                #  To choose from weighted and unweighted COG options
+                WEIGHTED = True
+
+                if WEIGHTED:
+                    MNI_cog_list = MNI_cog_weighted_list
+                    cog_region_name_list = cog_region_name_weighted_list
+                    cog_value_list = cog_weighted_value_list
+                else:
+                    pass
+
+                # Creating a dictionary to create dataframe
+                df_dict = OrderedDict({
+                'Cluster Number' : [cluster_number],
+                'Max Value' : cog_value_list,
+                'Num Voxels' : number_overlapping_cluster_voxels_list,
+                'Percentage of Voxels' : \
+                                     overlapping_cluster_voxels_percentage_list,
+                'MNI Coordinates': MNI_cog_list,
+                'Region Name': cog_region_name_list
+                })
+
+                df = pd.DataFrame(df_dict)
+
+                df_report.append(df)
+
+                # Empty the lists to be filled again
+                cog_value_list = []
+                number_overlapping_cluster_voxels_list = []
+                overlapping_cluster_voxels_percentage_list = []
+                MNI_cog_list = []
+                cog_region_name_list = []
 
 
                 """
@@ -324,12 +414,12 @@ class cluster_reporting_tool:
                               .        .
                               .        .
                      Cluster2 MaxValue COG Region Total_#_voxels
-                                   MaxValue COG Region #_voxels %_voxles_overlap
-                                   Value2   COG Region #_voxels %_voxles_overlap
-                                   Value3   COG Region #_voxels %_voxles_overlap
-                                   .        .
-                                   .        .
-                                   .        .
+                               MaxValue COG Region #_voxels %_voxles_overlap
+                               Value2   COG Region #_voxels %_voxles_overlap
+                               Value3   COG Region #_voxels %_voxles_overlap
+                               .        .
+                               .        .
+                               .        .
 
                 """
 
@@ -341,7 +431,8 @@ class cluster_reporting_tool:
 
                     # d. Number and Percentage of voxels overlapping the region
                     # e. Peak coordinate of the cluster
-
+        df_report.to_csv('ClusterReport.csv', index = False)
+        # TODO Test the function
 
 
 if __name__ == "__main__":
