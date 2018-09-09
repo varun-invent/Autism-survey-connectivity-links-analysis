@@ -407,15 +407,16 @@ class cluster_reporting_tool:
                 Then care about ordering the dictionary.
                 """
                 # Creating a dictionary to create dataframe
-                df_dict = OrderedDict({
-                'Cluster Number' : [cluster_number],
-                'Max Value' : cog_value_list,
-                'Num Voxels' : number_overlapping_cluster_voxels_list,
-                'Percentage of Voxels' : \
-                                     overlapping_cluster_voxels_percentage_list,
-                'MNI Coordinates': MNI_cog_list,
-                'Region Name': cog_region_name_list
-                })
+                df_dict = OrderedDict()
+
+                df_dict['Cluster Number'] = [cluster_number]
+                df_dict['Max Value'] = cog_value_list
+                df_dict['Num Voxels'] = number_overlapping_cluster_voxels_list
+                df_dict['Percentage of Voxel' ] = \
+                                     overlapping_cluster_voxels_percentage_list
+                df_dict['MNI Coordinates'] = MNI_cog_list
+                df_dict['Region Name'] = cog_region_name_list
+
 
                 df = pd.DataFrame(df_dict)
 
