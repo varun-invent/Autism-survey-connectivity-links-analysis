@@ -257,7 +257,7 @@ class cluster_reporting_tool:
 
                 # Number of voxels in the overlap of cluster and atlas region
                 number_overlapping_cluster_voxels = \
-                                            len(overlapping_indices_tuple_list)
+                                            len(overlapping_coordinates)
 
                 # Creating list to be added to dataframe
                 number_overlapping_cluster_voxels_list.append(
@@ -305,13 +305,13 @@ class cluster_reporting_tool:
 
                 if not roi_mask_for_unweighted_cog[cog_unweighted]:
                     cog_unweighted = \
-                              self.getNearestVoxel(roi_mask_for_unweighted_cog,
-                                                   cog_unweighted)
+                              tuple(self.getNearestVoxel(roi_mask_for_unweighted_cog,
+                                                   cog_unweighted))
 
                 if not roi_mask_for_weighted_cog[cog_weighted]:
                     cog_weighted= \
-                              self.getNearestVoxel(roi_mask_for_weighted_cog,
-                                                   cog_weighted)
+                              tuple(self.getNearestVoxel(roi_mask_for_weighted_cog,
+                                                   cog_weighted))
 
                 print('COM Unweighted', cog_unweighted)
                 print('COM Weighted', cog_weighted)
@@ -328,9 +328,23 @@ class cluster_reporting_tool:
                 MNI_cog_unweighted = self._XYZ2MNI(cog_unweighted)
                 MNI_cog_weighted = self._XYZ2MNI(cog_weighted)
 
+                # Convert the list of coordinates to string to get rid of:
+                # Exception: Data must be 1-dimensional
+
+
+                str_cog_unweighted = ''
+                for i in MNI_cog_unweighted:
+                    str_cog_unweighted = str_cog_unweighted + ' ' + str(i)
+
+                str_cog_weighted = ''
+                for i in MNI_cog_weighted:
+                    str_cog_weighted = str_cog_weighted + ' ' + str(i)
+
+
+
                 # Lists to be added to dataframe
-                MNI_cog_unweighted_list.append(MNI_cog_unweighted)
-                MNI_cog_weighted_list.append(MNI_cog_weighted)
+                MNI_cog_unweighted_list.append(str_cog_unweighted)
+                MNI_cog_weighted_list.append(str_cog_weighted)
 
 
                 # c. Report the name of the region
@@ -346,9 +360,9 @@ class cluster_reporting_tool:
 
                 # Names of the regions of COG
                 cog_region_name_weighted = \
-                                aal_atlas_obj.getAtlasRegions(MNI_cog_weighted)
+                              aal_atlas_obj.getAtlasRegions(MNI_cog_weighted)[1]
                 cog_region_name_unweighted = \
-                              aal_atlas_obj.getAtlasRegions(MNI_cog_unweighted)
+                            aal_atlas_obj.getAtlasRegions(MNI_cog_unweighted)[1]
 
                 print('Region name weighted COG: ',cog_region_name_weighted)
 
@@ -368,6 +382,30 @@ class cluster_reporting_tool:
                 else:
                     pass
 
+                # Sort the Regions bsed on cog value
+
+                # Get the indices of elements after they are sorted
+                sorted_indices = np.argsort(cog_value_list)
+
+                #  Sort the lists according to the above sorted_indices
+                cog_value_list = np.array(cog_value_list)[sorted_indices]
+                number_overlapping_cluster_voxels_list = \
+                np.array(number_overlapping_cluster_voxels_list)[sorted_indices]
+
+                overlapping_cluster_voxels_percentage_list = \
+                np.array(overlapping_cluster_voxels_percentage_list)[sorted_indices]
+
+                MNI_cog_list = np.array(MNI_cog_list)[sorted_indices]
+                cog_region_name_list = np.array(cog_region_name_list)[sorted_indices]
+
+
+                """
+                TODO:
+                Convert MNI coordinates from list to string (x,y,z)
+                The next error that I will have to deal with is unequal length
+                arrays. For that append each list with spaces.
+                Then care about ordering the dictionary.
+                """
                 # Creating a dictionary to create dataframe
                 df_dict = OrderedDict({
                 'Cluster Number' : [cluster_number],
@@ -396,7 +434,7 @@ class cluster_reporting_tool:
                 The order of the columns is not maintained
                 Test again about the validity of results. The number of voxels
                 is very low. Check it!
-                 
+
                 DONE:
                 Store each of the coordinates in cog_list, names in
                 name_list, values in value_list, number of voxels etc.
