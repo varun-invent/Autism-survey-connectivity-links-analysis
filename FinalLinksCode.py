@@ -676,10 +676,10 @@ class addAtlasNamestoCSV:
 
         consistentency_count = 0
 
-        with open(in_file1,'r') as f1:
-            with open(in_file2,'r') as f2:
-                for line2 in f2:
-                    link2 = line2.strip()
+        with open(in_file2,'r') as f2:
+            for line2 in f2:
+                link2 = line2.strip()
+                with open(in_file1,'r') as f1:
                     for line1 in f1:
                         link1 = line1.strip()
                         if link2 == link1:
@@ -688,11 +688,69 @@ class addAtlasNamestoCSV:
 
         return consistentency_count
 
+    @staticmethod
+    def find_ABIDE_links(in_file, all_links_col_idx, consistent_links_col_idx,
+                        paperID_participant_col_idx,
+                        out_file = 'link_participants.csv'):
+        """
+        Finds the links that has participants from the ABIDE dataset
+
+        Input:
+            in_file: CSV containg all the following columns
+            all_links_col_idx: Columns containing the paperID, LinkName.
+            consistent_links_col_idx: Columns containing LinkNames
+            paperID_paticipant_col_idx: Columns containing paperID, Original/ABIDE
+            out_file: Name of the output file
+
+        Output:
+            2 row file - Link and Original/ABIDE
+        """
+
+        df = pd.read_csv(in_file)
+
+        all_links_df = df.iloc[:, all_links_col_idx]
+        consistent_links_df = df.iloc[:, consistent_links_col_idx]
+        paperID_participants_df = df.iloc[:, paperID_participant_col_idx]
+
+
+        # Dict associating each paperID with Participants(original/ABIDE) from paperID_ABIDE_file
+        dict_paperID_participants = {}
+        for index, row in paperID_participants_df.iterrows():
+            dict_paperID_participants[row['paperID2']] = row['participants2']
+
+        # Dict associating each link with a list of Participants(original/ABIDE) from all_links_file
+        dict_link_participants = {}
+        for index, row in all_links_df.iterrows():
+            if row['link1'] in dict_link_participants:
+                dict_link_participants[row['link1']] = \
+                dict_link_participants[row['link1']] + '; ' + str(row['paperID1']) \
+                +'-'+ dict_paperID_participants[row['paperID1']]
+            else:
+                dict_link_participants[row['link1']] = \
+                 str(row['paperID1']) +'-'+ dict_paperID_participants[row['paperID1']]
+
+
+        # Now loop over each consistent link and using the previous dict, find
+        # out the participant types
+        df_link_participants = co.OrderedDict()
+        for index, row in consistent_links_df.iterrows():
+            if pd.isna(row['link2']):
+                break
+            if row['link2'] in df_link_participants:
+                raise Exception('Duplicate consistent links found ', row['link2'])
+            else:
+                df_link_participants[row['link2']] = dict_link_participants[row['link2']]
+
+        df_link_participants = pd.DataFrame(df_link_participants, index=[0])
+        df_link_participants.to_csv(out_file, index = False)
+
+
 
 def show_columns(df):
     """
-    This function gives a quick viwe of what are the columns and their corresponding indices
-    of a csv file or dataframe. It is quite handy while debugging
+    This function gives a quick viwe of what are the columns and their
+    corresponding indices of a csv file or dataframe.
+    It is quite handy while debugging.
 
     Input: CSV file path or a pandas Dataframe
     Output: Displays the columns along with their index
