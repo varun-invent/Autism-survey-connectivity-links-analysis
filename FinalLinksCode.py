@@ -667,7 +667,7 @@ class addAtlasNamestoCSV:
     def check_number_of_consistencies(in_file1, in_file2):
         """
         This function finds, across all the links of a study (file1), how many
-        links are consistent. It refers to a list of consistent links (file2).
+        links are consistent. It refers a list of consistent links (file2).
 
         in_file1: File that contains all the links of the study in question
         about consistency. It contains link name in each line.
@@ -683,10 +683,57 @@ class addAtlasNamestoCSV:
                     for line1 in f1:
                         link1 = line1.strip()
                         if link2 == link1:
+                            print(link1)
                             consistentency_count += 1
                             break
 
         return consistentency_count
+
+    @staticmethod
+    def check_number_of_consistencies_per_study(in_file1, in_file2):
+        """
+        This function finds, across all the links, for each study in file1,
+        how many links are consistent.
+        It refers a list of consistent links (file2).
+
+        in_file1: File that contains all the links of all the studies.
+        It contains study ID and link name in each line.
+        in_file2: File that contains all the consistent links for all studies.
+        """
+
+        all_studyID_links = pd.read_csv(in_file1)
+        consistent_links = pd.read_csv(in_file2)
+
+        study_ids = np.unique(all_studyID_links.iloc[:,1])
+
+
+
+        consistency_count_list = np.zeros(len(study_ids))
+
+        for index1, row1 in consistent_links.iterrows():
+            consistent_link = row1['Link']
+            study_id_list = []
+            for index2, row2 in all_studyID_links.iterrows():
+                link = row2['Link']
+                study_id = row2['PaperID']
+                if consistent_link == link:
+                    if study_id not in study_id_list:
+                        study_id_list.append(study_id)
+                        idx = np.where(study_ids == study_id)
+                        consistency_count_list[idx] = consistency_count_list[idx] + 1
+
+
+
+        for i in range(len(consistency_count_list)):
+            print('Study: %s, Consistent Links: %s\n'%
+            (study_ids[i], consistency_count_list[i]))
+
+
+
+
+
+
+
 
     @staticmethod
     def find_ABIDE_links(in_file, all_links_col_idx, consistent_links_col_idx,
