@@ -26,11 +26,13 @@ class addAtlasNamestoCSV:
         # self.JuliechAtlasObj = JuliechAtlasObj
 
     @staticmethod
-    def extract_columns_and_save_CSV(self,csv_path, column_index_include, filename):
+    def extract_columns_and_save_CSV(self,csv_path, column_index_include,
+                                                                   filename):
         """
         Reads CSV file and saves the selected columns
         Returns pandas data frame
-        Can be called as addAtlasNamestoCSV.extract_columns_and_save_CSV() or self.extract_columns_and_save_CSV()
+        Can be called as addAtlasNamestoCSV.extract_columns_and_save_CSV() or
+        self.extract_columns_and_save_CSV()
         """
         column_index_include = np.array(column_index_include)
         df = pd.read_csv(csv_path)
@@ -52,7 +54,8 @@ class addAtlasNamestoCSV:
         else:
             return 'C'
 
-    def addNameCSV(self, csvPath, filename, column_index_include, read_hemis_from_csv = False):
+    def addNameCSV(self, csvPath, filename, column_index_include,
+                                                read_hemis_from_csv = False):
         # read CSV file
         df = pd.read_csv(csvPath)
 
@@ -117,7 +120,8 @@ class addAtlasNamestoCSV:
                     print('error at S.No %s'% s_no)
 
 
-                assert (len(seedMNIint) == 3), "Seed MNI Coordinates Error at S.No %s" % s_no
+                assert (len(seedMNIint) == 3),
+                                "Seed MNI Coordinates Error at S.No %s" % s_no
 
                 if read_hemis_from_csv:
                     if SeedHem.upper() in ['L','R','C']:
@@ -125,7 +129,8 @@ class addAtlasNamestoCSV:
                     elif SeedHem == '-':
                         hemisphereSeed = self.get_hemisphere(seedMNIint)
                     else:
-                        raise Exception('Incorrect Hemisphere entry at Seed MNI: ',seedMNI)
+                        raise Exception('Incorrect Hemisphere entry at Seed\
+                         MNI: ',seedMNI)
                 else:
                     hemisphereSeed = self.get_hemisphere(seedMNIint)
 
@@ -136,7 +141,8 @@ class addAtlasNamestoCSV:
 
 
                 # Brainnetome
-                _,seedLobe, seedGyrus, seedNameBN = self.BNAtlasObj.getAtlasRegions(seedMNIint)
+                _,seedLobe, seedGyrus, seedNameBN =\
+                 self.BNAtlasObj.getAtlasRegions(seedMNIint)
 
                 # Loop over atlases (For Seed)
                 if self.atlas_dict_list:
@@ -152,6 +158,8 @@ class addAtlasNamestoCSV:
 
 
             else:
+
+
                 # Brainnetome atlas
                 seedLobe = np.nan
                 seedGyrus = np.nan
@@ -182,7 +190,8 @@ class addAtlasNamestoCSV:
                     print(v)
                     print('error at S.No %s'% s_no)
 
-                assert (len(underConnectedMNIint) == 3), "Underconn. MNI Coordinates Error at S.No %s" % s_no
+                assert (len(underConnectedMNIint) == 3),\
+                 "Underconn. MNI Coordinates Error at S.No %s" % s_no
 
 
                 if read_hemis_from_csv:
@@ -191,7 +200,8 @@ class addAtlasNamestoCSV:
                     elif UnderHem == '-':
                         hemisphereUC = self.get_hemisphere(underConnectedMNIint)
                     else:
-                        raise Exception('Incorrect Hemisphere entry at UC MNI: ',underConnectedMNIint)
+                        raise Exception('Incorrect Hemisphere entry at UC MNI: '\
+                        ,underConnectedMNIint)
                 else:
                     hemisphereUC = self.get_hemisphere(underConnectedMNIint)
 
@@ -205,13 +215,15 @@ class addAtlasNamestoCSV:
                     connectivityName_list = []
                     for atlas_dict in self.atlas_dict_list:
                         obj = atlas_dict['obj']
-                        _, connectivityname, _ = obj.getAtlasRegions(underConnectedMNIint)
+                        _, connectivityname, _ = \
+                        obj.getAtlasRegions(underConnectedMNIint)
                         connectivityName_list.append(connectivityname)
 
                 # _,connectivityNameHO,_ = self.HOAtlasObj.getAtlasRegions(underConnectedMNIint)
                 # _,connectivityNameJuliech,_ = self.JuliechAtlasObj.getAtlasRegions(underConnectedMNIint)
 
-                _,connectivityLobe, connectivityGyrus, connectivityNameBN = self.BNAtlasObj.getAtlasRegions(underConnectedMNIint)
+                _,connectivityLobe, connectivityGyrus, connectivityNameBN = \
+                self.BNAtlasObj.getAtlasRegions(underConnectedMNIint)
 
                 # Construct the dictionary in the loop and then make it a dataframe
 
@@ -247,7 +259,8 @@ class addAtlasNamestoCSV:
                 if self.atlas_dict_list:
                     for idx, atlas_dict in enumerate(self.atlas_dict_list):
                         name = atlas_dict['name']
-                        dataframe_dict['ConnectivityName'+name] = [connectivityName_list[idx]]
+                        dataframe_dict['ConnectivityName'+name] = \
+                                                [connectivityName_list[idx]]
 
                 _dataframe_dict = co.OrderedDict({
                                  'ConnectivityName':[underConnectivityName],
@@ -275,7 +288,8 @@ class addAtlasNamestoCSV:
             if not pd.isna(overConnectedMNI):
                 overConnectedMNI = overConnectedMNI.strip('\n')
                 overConnectedMNIint = overConnectedMNI.split(' ')
-                overConnectedMNIint = [x for x in overConnectedMNIint if x != '']
+                overConnectedMNIint = \
+                                    [x for x in overConnectedMNIint if x != '']
 
                 try:
                     overConnectedMNIint = list(map(int, overConnectedMNIint))
@@ -283,7 +297,8 @@ class addAtlasNamestoCSV:
                     print(v)
                     print('error at S.No %s'% s_no)
 
-                assert (len(overConnectedMNIint) == 3), "Overconn. MNI Coordinates Error at S.No %s" % s_no
+                assert (len(overConnectedMNIint) == 3),\
+                            "Overconn. MNI Coordinates Error at S.No %s" % s_no
 
 
                 if read_hemis_from_csv:
@@ -292,7 +307,8 @@ class addAtlasNamestoCSV:
                     elif OverHem == '-':
                         hemisphereOC = self.get_hemisphere(overConnectedMNIint)
                     else:
-                        raise Exception('Incorrect Hemisphere entry at UC MNI: ',overConnectedMNIint)
+                        raise Exception('Incorrect Hemisphere entry at UC MNI: '\
+                        ,overConnectedMNIint)
                 else:
                     hemisphereOC = self.get_hemisphere(overConnectedMNIint)
 
@@ -309,10 +325,12 @@ class addAtlasNamestoCSV:
                     connectivityName_list = []
                     for atlas_dict in self.atlas_dict_list:
                         obj = atlas_dict['obj']
-                        _, connectivityname, _ = obj.getAtlasRegions(overConnectedMNIint)
-                        connectivityName_list.append(connectivityname)
+                        _, connectivityname, _ = \
+                        obj.getAtlasRegions(overConnectedMNIint)
+                                connectivityName_list.append(connectivityname)
 
-                _,connectivityLobe, connectivityGyrus, connectivityNameBN = self.BNAtlasObj.getAtlasRegions(overConnectedMNIint)
+                _,connectivityLobe, connectivityGyrus, connectivityNameBN =\
+                            self.BNAtlasObj.getAtlasRegions(overConnectedMNIint)
 
 
                 # Construct the dictionary in the loop and then make it a dataframe
@@ -349,7 +367,8 @@ class addAtlasNamestoCSV:
                 if self.atlas_dict_list:
                     for idx, atlas_dict in enumerate(self.atlas_dict_list):
                         name = atlas_dict['name']
-                        dataframe_dict['ConnectivityName'+name] = [connectivityName_list[idx]]
+                        dataframe_dict['ConnectivityName'+name] =\
+                                                    [connectivityName_list[idx]]
 
                 _dataframe_dict = co.OrderedDict({
                                  'ConnectivityName':[overConnectivityName],
@@ -449,11 +468,12 @@ class addAtlasNamestoCSV:
     @staticmethod
     def remove_blank_links(columns_index, in_file, out_file, dropped_file):
         """
-        Removes the links/rows that contain blanks in the columns specified by columns_index
-        out_file contains all the links after dropping the blank links
-        dropped_file contains the blank links that were dropped
+        Removes the links/rows that contain blanks in the columns specified by
+        columns_index out_file contains all the links after dropping the blank
+        links dropped_file contains the blank links that were dropped
 
-        The function returns the final fully populated non blank dataframe - df_final
+        The function returns the final fully populated non blank dataframe -
+        df_final
         And the data frame that contains the dropped links - df_dropped
         """
         # read CSV file
@@ -465,7 +485,8 @@ class addAtlasNamestoCSV:
         # df.iloc[:,45].as_matrix()
 
         for col_idx in column_index:
-            blank_links_list.extend(list(np.where(pd.isna(df.iloc[:,col_idx]) == True)[0]))
+            blank_links_list.extend(list(np.where(pd.isna(df.iloc[:,col_idx])\
+                                                                == True)[0]))
 
         blank_links_list = list(set(blank_links_list))
 
@@ -476,8 +497,9 @@ class addAtlasNamestoCSV:
         return df_final, df_dropped
 
     @staticmethod
-    def find_consistent_conflicting_links(df, columns_match_index, connectivity_column_index, s_no_column_index,\
-                                          paper_id_column_index,ignore_hemispheres= False):
+    def find_consistent_conflicting_links(df, columns_match_index, \
+                            connectivity_column_index, s_no_column_index,\
+                            paper_id_column_index,ignore_hemispheres= False):
         conflicts = []
         consistent = []
 
@@ -494,7 +516,12 @@ class addAtlasNamestoCSV:
             for ix2, row2 in df[ix1+1:].iterrows():
                 # print(row1[1], row2[1]) # printing S_no pairs
                 # if all the columns match/ Same links
-                node1 = {tuple(row1[_columns_match_index[0:math.floor(len(_columns_match_index)/2)]]), tuple(row1[_columns_match_index[math.floor(len(_columns_match_index)/2):]])}
+                node1 = {tuple(row1[_columns_match_index[0:math.floor\
+                                (len(_columns_match_index)/2)]]), \
+                                tuple(row1[_columns_match_index[math.floor(\
+                                len(_columns_match_index)/2):]])}
+
+
                 node2 = {tuple(row2[_columns_match_index[0:math.floor(len(_columns_match_index)/2)]]), tuple(row2[_columns_match_index[math.floor(len(_columns_match_index)/2):]])}
                 # print('Node 1 and 2', node1, node2)
                 # Created the above nodes to make sure that the link AB and BA are treated equally
@@ -685,7 +712,7 @@ class addAtlasNamestoCSV:
                         if link2 == link1:
                             print(link1)
                             consistentency_count += 1
-                            break
+                            break # To make sure one study link in counted only once
 
         return consistentency_count
 
@@ -693,12 +720,13 @@ class addAtlasNamestoCSV:
     def check_number_of_consistencies_per_study(in_file1, in_file2):
         """
         This function finds, across all the links, for each study in file1,
-        how many links are consistent.
-        It refers a list of consistent links (file2).
+        how many links are consistent/inconsistent.
+        It refers a list of consistent/inconsistent links (file2).
 
         in_file1: File that contains all the links of all the studies.
         It contains study ID and link name in each line.
-        in_file2: File that contains all the consistent links for all studies.
+        in_file2: File that contains all the consistent/inconsistent links for
+        all studies.
         """
 
         all_studyID_links = pd.read_csv(in_file1)
@@ -707,26 +735,38 @@ class addAtlasNamestoCSV:
         study_ids = np.unique(all_studyID_links.iloc[:,1])
 
 
-
+        # list that contains the count of (in)consistent links per study
         consistency_count_list = np.zeros(len(study_ids))
 
-        for index1, row1 in consistent_links.iterrows():
+        num_total_links_per_study = np.zeros(len(study_ids))
+
+        for ind, (index1, row1) in enumerate(consistent_links.iterrows()):
             consistent_link = row1['Link']
-            study_id_list = []
+            study_id_list = [] # To make sure one study link in counted only once
             for index2, row2 in all_studyID_links.iterrows():
                 link = row2['Link']
                 study_id = row2['PaperID']
+                idx = np.where(study_ids == study_id)
+                if ind == 0:
+                    num_total_links_per_study[idx]  = num_total_links_per_study[idx] + 1
                 if consistent_link == link:
                     if study_id not in study_id_list:
                         study_id_list.append(study_id)
-                        idx = np.where(study_ids == study_id)
+                        # idx = np.where(study_ids == study_id)
                         consistency_count_list[idx] = consistency_count_list[idx] + 1
 
 
 
         for i in range(len(consistency_count_list)):
-            print('Study: %s, Consistent Links: %s\n'%
-            (study_ids[i], consistency_count_list[i]))
+            print(study_ids[i])
+        for i in range(len(consistency_count_list)):
+            print(num_total_links_per_study[i])
+        for i in range(len(consistency_count_list)):
+            print(consistency_count_list[i])
+
+        # for i in range(len(consistency_count_list)):
+            # print('Study: %s\t #Total Links: %s\t #(In)Consistent Links: %s\n'%
+            # (study_ids[i], num_total_links_per_study[i], consistency_count_list[i]))
 
 
 
@@ -790,6 +830,55 @@ class addAtlasNamestoCSV:
 
         df_link_participants = pd.DataFrame(df_link_participants, index=[0])
         df_link_participants.to_csv(out_file, index = False)
+
+    @staticmethod
+    def delete_duplicate_links(in_file, node1_idx_reverse = [2,3,0,1],\
+                                            src_equals_dest_idx = 8):
+        '''
+        This function finds all the links B-A for the link A-B and deletes it
+        Input:
+        -----
+        in_file: CSV file
+        node1_idx_reverse: index B-A for A-B
+
+        Output:
+        ------
+        out_file_path:  is the path of the csv from which the duplicates are
+        removed
+
+        '''
+        df = pd.read_csv(in_file)
+        df_mat = df.values
+        new_df = []
+        # final_df = pd.DataFrame(columns=df.columns)
+        i = 0
+
+        for idx1 in range(df_mat.shape[0]):
+            node1_idx = node1_idx_reverse + list(range(4,len(df.columns)))
+            if df_mat[idx1,src_equals_dest_idx]:
+                i = i+1
+                print(i,':',df_mat[idx2,:])
+                new_df.append(df_mat[idx1,:])
+
+            for idx2 in range(idx1, df_mat.shape[0]):
+                if not pd.notna(df_mat[idx1,node1_idx_reverse[1]]) or\
+                    not pd.notna(df_mat[idx1,node1_idx_reverse[1]]):
+                    continue
+
+
+                if (df_mat[idx1,node1_idx] == df_mat[idx2,:]).all() and \
+                not df_mat[idx1,src_equals_dest_idx]:
+                    i = i+1
+                    print(i,':',df_mat[idx2,:])
+                    new_df.append(df_mat[idx2,:])
+
+        in_file_name = os.path.splitext(in_file)[0])
+        out_file_path = in_file_name + '_' + 'duplicates_removed.csv'
+        new_df = np.array(new_df)
+        new_df = pd.DataFrame(data=new_df, columns=df.columns)
+        new_df.to_csv(out_file_path,index=False)
+
+        return out_file_path
 
 
 
