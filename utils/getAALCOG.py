@@ -1,7 +1,6 @@
 import sys
 import os
 
-
 # Using https://stackoverflow.com/questions/51520/how-to-get-an-absolute-file-path-in-python
 utils_path = os.path.abspath("utils")
 
@@ -75,13 +74,17 @@ def getNearestVoxel(brain_data, roi, COG):
     return MNI
 
 
-for roi in AALROIindex:
-    roi = int(roi)
-    COG = obj.getCOG(roi)
-    COG = [int(COG[0]), int(COG[1]), int(COG[2])]
-    print('Index %s : %s' % (roi, COG))
-    XYZ = queryAtlas.MNI2XYZ2mm(COG)
-    if brain[XYZ[0], XYZ[1], XYZ[2]] != roi:
-        print('COG Lies outside for ROI Index %s' % roi)
-        newCOG = getNearestVoxel(brain, roi, XYZ)[0]
-        print('Index %s : %s (Modified)' % (roi, newCOG))
+def get_representative_coordinates():
+    pass
+    
+if __name__ == "__main__":
+    for roi in AALROIindex:
+        roi = int(roi)
+        COG = obj.getCOG(roi)
+        COG = [int(COG[0]), int(COG[1]), int(COG[2])]
+        print('Index %s : %s' % (roi, COG))
+        XYZ = queryAtlas.MNI2XYZ2mm(COG)
+        if brain[XYZ[0], XYZ[1], XYZ[2]] != roi:
+            print('COG Lies outside for ROI Index %s' % roi)
+            newCOG = getNearestVoxel(brain, roi, XYZ)[0]
+            print('Index %s : %s (Modified)' % (roi, newCOG))
