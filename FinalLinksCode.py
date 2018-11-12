@@ -11,6 +11,7 @@ from tqdm import tqdm
 from utils import atlasUtility as au
 from utils import brainnetomeUtility as bu
 import collections as co
+import os
 
 
 
@@ -54,7 +55,7 @@ class addAtlasNamestoCSV:
         else:
             return 'C'
 
-    def addNameCSV(self, csvPath, filename, column_index_include,
+    def addNameCSV(self, csvPath, filename, column_index_include,\
                                                 read_hemis_from_csv = False):
         # read CSV file
         df = pd.read_csv(csvPath)
@@ -120,7 +121,7 @@ class addAtlasNamestoCSV:
                     print('error at S.No %s'% s_no)
 
 
-                assert (len(seedMNIint) == 3),
+                assert (len(seedMNIint) == 3),\
                                 "Seed MNI Coordinates Error at S.No %s" % s_no
 
                 if read_hemis_from_csv:
@@ -327,7 +328,7 @@ class addAtlasNamestoCSV:
                         obj = atlas_dict['obj']
                         _, connectivityname, _ = \
                         obj.getAtlasRegions(overConnectedMNIint)
-                                connectivityName_list.append(connectivityname)
+                        connectivityName_list.append(connectivityname)
 
                 _,connectivityLobe, connectivityGyrus, connectivityNameBN =\
                             self.BNAtlasObj.getAtlasRegions(overConnectedMNIint)
@@ -776,9 +777,10 @@ class addAtlasNamestoCSV:
 
 
     @staticmethod
-    def find_ABIDE_links(in_file, all_links_col_idx, consistent_links_col_idx,
-                        paperID_participant_col_idx,
-                        out_file = 'link_participants.csv'):
+    def find_ABIDE_links(in_file, all_links_col_idx, consistent_links_col_idx,\
+        paperID_participant_col_idx,\
+        out_file = 'link_participants.csv'):
+
         """
         Finds the links that has participants from the ABIDE dataset
 
@@ -854,10 +856,11 @@ class addAtlasNamestoCSV:
         i = 0
 
         for idx1 in range(df_mat.shape[0]):
-            node1_idx = node1_idx_reverse + list(range(4,len(df.columns)))
+            node1_idx = node1_idx_reverse + list(range(len(node1_idx_reverse),\
+                                                            len(df.columns)))
             if df_mat[idx1,src_equals_dest_idx]:
                 i = i+1
-                print(i,':',df_mat[idx2,:])
+                print(i,':',df_mat[idx1,:])
                 new_df.append(df_mat[idx1,:])
 
             for idx2 in range(idx1, df_mat.shape[0]):
@@ -872,13 +875,114 @@ class addAtlasNamestoCSV:
                     print(i,':',df_mat[idx2,:])
                     new_df.append(df_mat[idx2,:])
 
-        in_file_name = os.path.splitext(in_file)[0])
+        in_file_name = os.path.splitext(in_file)[0]
         out_file_path = in_file_name + '_' + 'duplicates_removed.csv'
         new_df = np.array(new_df)
         new_df = pd.DataFrame(data=new_df, columns=df.columns)
         new_df.to_csv(out_file_path,index=False)
 
         return out_file_path
+
+
+    @staticmethod
+    def find_distances_between_regions(in_file1, in_file2):
+        '''
+        in_file1: This is the file containing the complete description of all
+        the links
+
+        in_file2: This file contains the links that you want to find the
+        distances for
+
+        Algorithm:
+        ---------
+        First create a dictionary of AAL MNI representative coordinates that
+        will be used below.
+
+        Scan the Inconsistencies table
+
+        Extract the Link column
+
+        For each link L
+
+            Scan the finalinksTable and extract all the rows having link L in
+            AAL Link column
+
+            For each of the extracted row, extract the seed and target MNI and
+            Hemis and modified AAL name and connectivity and paperID.
+
+            Then calculate DeltaR1 and DeltaR2
+
+            For each MNI coordinate pairs, find the AAL region to which it
+            belongs and its distance from that region's representative coordinate.
+
+            Find mean distance and Append it to the rows extracted and create a new DF
+
+        Return the final table and csv
+        '''
+
+        PaperID_idx = 77
+        AAL_link_idx = 73
+        under_over_idx = 69
+        seed_x_idx, seed_y_idx, seed_z_idx = 52,53,54
+        conn_x_idx, conn_y_idx, conn_z_idx =  66,67,68
+        extract_idx = [PaperID_idx, seed_x_idx, seed_y_idx, seed_z_idx,\
+                       conn_x_idx, conn_y_idx, conn_z_idx, under_over_idx
+                        ]
+
+        main_file_mat = pd.read_csv(in_file1).values
+        links_file_mat = pd.read_csv(in_file2).values.squeeze()
+        # import pdb; pdb.set_trace()
+        for link in links_file_mat:
+            print('Link: ', link)
+            temp_mat_under = []
+            temp_mat_over = []
+            for row_idx in range(main_file_mat.shape[0]):
+                if main_file_mat[row_idx, AAL_link_idx] == link:
+                    extract = main_file_mat[row_idx,extract_idx]
+                    if main_file_mat[row_idx, under_over_idx] == -1:
+                        temp_mat_under.append(extract)
+                    elif main_file_mat[row_idx, under_over_idx] == 1:
+                        temp_mat_over.append(extract)
+
+            if len(temp_mat_under) !=0 and len(temp_mat_over) !=0:
+                dist_list1 = []
+                dist_list2 = []
+                for i in range(len(temp_mat_under)):
+                    for j in range(len(temp_mat_over)):
+                        # calculate delta r1
+                        dist1 = np.sqrt(\
+                            (temp_mat_under[i][1] - temp_mat_over[j][1])**2 +\
+                            (temp_mat_under[i][2] - temp_mat_over[j][2])**2 +\
+                            (temp_mat_under[i][3] - temp_mat_over[j][3])**2 \
+                            )
+                        dist_list1.append(dist1)
+
+                        # calculate delta r2
+                        dist2 = np.sqrt(\
+                            (temp_mat_under[i][4] - temp_mat_over[j][4])**2 +\
+                            (temp_mat_under[i][5] - temp_mat_over[j][5])**2 +\
+                            (temp_mat_under[i][6] - temp_mat_over[j][6])**2 \
+                            )
+                        dist_list2.append(dist2)
+
+
+                delta_r1 = min(dist_list1)
+                delta_r2 = min(dist_list2)
+
+                print(delta_r1, delta_r2)
+
+
+            # elif len(temp_mat_under) !=0 and len(temp_mat_under) !=0:
+            else:
+                print('Something wrong!')
+                raise Exception('Something wrong!')
+
+
+
+
+
+
+
 
 
 
