@@ -840,7 +840,8 @@ class addAtlasNamestoCSV:
         This function finds all the links B-A for the link A-B and deletes it
         Input:
         -----
-        in_file: CSV file
+        in_file: CSV file that is a pivot table having one duplicate link for each link
+        where the nodes are different.
         node1_idx_reverse: index B-A for A-B
 
         Output:
@@ -864,8 +865,8 @@ class addAtlasNamestoCSV:
                 new_df.append(df_mat[idx1,:])
 
             for idx2 in range(idx1, df_mat.shape[0]):
-                if not pd.notna(df_mat[idx1,node1_idx_reverse[1]]) or\
-                    not pd.notna(df_mat[idx1,node1_idx_reverse[1]]):
+                if not pd.notna(df_mat[idx1,node1_idx_reverse[0]]) or\
+                   not pd.notna(df_mat[idx1,node1_idx_reverse[int(len(node1_idx_reverse)/2)]]):
                     continue
 
 
